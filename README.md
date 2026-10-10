@@ -70,7 +70,7 @@ This repository delivers an end-to-end deep learning framework addressing both p
 | :--- | :--- | :--- |
 | **Input Signal** | 2 Overlapping human speakers ($s_1 + s_2$) | Speech + Compound environmental noise ($s + \sum n_k$) |
 | **Primary Corpora** | Libri2Mix (14,269 mixture pairs, 251 speakers) | NOIZEUS (8 noise types, 4 SNRs) & LibriSpeech Continuous |
-| **Baseline Architecture** | Spectrogram U-Net $ightarrow$ 1D Conv-TasNet | 1D Conv-TasNet (Time-Domain Masking) |
+| **Baseline Architecture** | Spectrogram U-Net $\rightarrow$ 1D Conv-TasNet | 1D Conv-TasNet (Time-Domain Masking) |
 | **State-of-the-Art (SOTA)** | Conv-TasNet + Utterance-level PIT + Wiener Filter | **ClearVoice FRCRN-16K** (Complex STFT CFSMN) |
 | **Loss Function** | Pairwise Neg. SI-SDR with Permutation Invariance | Neg. SI-SDR loss with Dynamic SNR Jittering |
 | **Key Benchmark Result** | **+13.13 dB SI-SDRi, 2.36 PESQ, 88.1% STOI** | **+7.22 dB SI-SDR gain, 2.54 PESQ, 97.12% Match** |
@@ -84,13 +84,13 @@ In single-channel speaker separation, the model receives $x(t) = s_1(t) + s_2(t)
 
 We employ **Utterance-level Permutation Invariant Training (uPIT)**:
 
-$$\mathcal{L}_{	ext{uPIT}} = \min_{p \in \mathcal{P}} \sum_{i=1}^{2} \mathcal{L}_{	ext{SI-SDR}}(s_i, \hat{s}_{p(i)})$$
+$$\mathcal{L}_{\text{uPIT}} = \min_{p \in \mathcal{P}} \sum_{i=1}^{2} \mathcal{L}_{\text{SI-SDR}}(s_i, \hat{s}_{p(i)})$$
 
 Where the Scale-Invariant Signal-to-Distortion Ratio (SI-SDR) is defined as:
 
-$$lpha = rac{\hat{s}^T s}{\|s\|^2 + \epsilon}, \quad e_{	ext{target}} = lpha s, \quad e_{	ext{noise}} = \hat{s} - e_{	ext{target}}$$
+$$\alpha = \frac{\hat{s}^T s}{\|s\|^2 + \epsilon}, \quad e_{\text{target}} = \alpha s, \quad e_{\text{noise}} = \hat{s} - e_{\text{target}}$$
 
-$$	ext{SI-SDR}(s, \hat{s}) = 10 \log_{10} \left( rac{\|e_{	ext{target}}\|^2}{\|e_{	ext{noise}}\|^2 + \epsilon} ight)$$
+$$\text{SI-SDR}(s, \hat{s}) = 10 \log_{10} \left( \frac{\|e_{\text{target}}\|^2}{\|e_{\text{noise}}\|^2 + \epsilon} \right)$$
 
 ---
 
@@ -132,12 +132,12 @@ Evaluating on **200 held-out test mixtures** from `/Libri2Mix/wav8k/min/test`:
 * **Input Mixture PESQ**: $1.59 \pm 0.14$ (Median: 1.58)
 * **Separated Output PESQ**: **$2.30 \pm 0.32$ (Median: 2.32, Max: 3.07)**
 * **Net PESQ Improvement ($\Delta$)**: **$+0.71 \pm 0.33$**
-* **STOI Intelligibility**: $71.3\% ightarrow \mathbf{88.1\%}$
-* **Max SI-SDRi Achieved**: **$+13.13 	ext{ dB}$**
+* **STOI Intelligibility**: $71.3\% \rightarrow \mathbf{88.1\%}$
+* **Max SI-SDRi Achieved**: **$+13.13 \text{ dB}$**
 
 #### Natural Wiener-Filtering Post-Processing:
 Raw time-domain separation masks occasionally produce a faint synthetic metallic artifact. We designed a spectral Wiener post-filtering module:
-$$W_k(f, t) = rac{|\hat{S}_k(f, t)|^2}{|\hat{S}_1(f, t)|^2 + |\hat{S}_2(f, t)|^2 + \epsilon}$$
+$$W_k(f, t) = \frac{|\hat{S}_k(f, t)|^2}{|\hat{S}_1(f, t)|^2 + |\hat{S}_2(f, t)|^2 + \epsilon}$$
 This re-synthesizes natural vocal tract overtones, producing natural human voice restoration (audible in [`speaker_separation/samples/`](speaker_separation/samples/)).
 
 ---
@@ -154,7 +154,7 @@ Our second core objective is speech denoising under severe environmental interfe
 ### 4.2 Dataset Ingestion & Mathematical Noise Isolation (NOIZEUS Corpus)
 Using the standardized **NOIZEUS** corpus (8 kHz, 30 clean IEEE sentences `sp01`–`sp30` across 8 noise environments at 0, 5, 10, 15 dB SNRs):
 * Extracted **930 ground-truth pure isolated noise tracks** via sample-aligned subtraction:
-  $$n_{	ext{isolated}}(t) = x_{	ext{noisy}}(t) - s_{	ext{clean}}(t)$$
+  $$n_{\text{isolated}}(t) = x_{\text{noisy}}(t) - s_{\text{clean}}(t)$$
 * Organized into: `airport`, `babble`, `car`, `exhibition`, `restaurant`, `station`, `street`, `train`.
 * Split: 80% train (`sp01`–`sp24`), 20% held-out test (`sp25`–`sp30`).
 
@@ -210,9 +210,9 @@ To verify cross-corpus generalization beyond short IEEE sentences, we tested on 
 | Metric | Corrupted Multi-Noise Input | ClearVoice FRCRN Output | Net Gain ($\Delta$) | Breakthrough Significance |
 | :--- | :---: | :---: | :---: | :--- |
 | **SI-SDR** | **+4.99 dB** | **+12.21 dB** | **+7.22 dB** | Dramatic signal fidelity recovery |
-| **PESQ (ITU-T P.862)** | **1.430** | **2.542** | **+1.112** | **Massive leap from degraded $ightarrow$ clear telephony** |
+| **PESQ (ITU-T P.862)** | **1.430** | **2.542** | **+1.112** | **Massive leap from degraded $\rightarrow$ clear telephony** |
 | **STOI** | **0.727** | **0.783** | **+0.056** | Clear human word comprehension |
-| **Noise Power Energy** | $2.56 	imes 10^{-3}$ | $0.49 	imes 10^{-3}$ | **-80.89%** | **+7.19 dB direct noise attenuation** |
+| **Noise Power Energy** | $2.56 \times 10^{-3}$ | $0.49 \times 10^{-3}$ | **-80.89%** | **+7.19 dB direct noise attenuation** |
 | **Waveform Correlation ($r$)** | **0.8715** | **0.9712** | **+0.0997** | **97.12% clean speech mathematical match** |
 | **Real-Time Factor (RTF)** | — | **0.103×** | — | **Processes 6.8s in 0.70s (~10× faster than real-time)** |
 
