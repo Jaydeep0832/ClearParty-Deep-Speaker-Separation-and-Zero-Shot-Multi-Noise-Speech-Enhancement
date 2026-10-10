@@ -1,0 +1,37 @@
+# Model Checkpoint Weights (Host on HuggingFace / Drive)
+*.pth
+*.pt
+*.ckpt
+checkpoints/
+checkpoints_v2/
+checkpoints_denoising/
+
+# Datasets and Large Compressed Archives
+*.zip
+*.tar
+*.tar.gz
+data/
+Libri2Mix/
+LibriSpeech/
+noizeus/
+noizeus_prepared.zip
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+ENV/
+
+# Jupyter Notebook Checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# System & IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
