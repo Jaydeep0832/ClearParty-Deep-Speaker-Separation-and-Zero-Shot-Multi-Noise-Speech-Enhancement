@@ -8,17 +8,6 @@
 
 ---
 
-## 👥 Academic Project Metadata
-* **Project Title**: Deep Learning-Based Speech Enhancement & Separation for the Cocktail Party Problem
-* **Institution**: Department of Information and Communication Technology (ICT), School of Technology, Pandit Deendayal Energy University (PDEU), Gandhinagar, Gujarat, India
-* **Student Researchers**:
-  * **Jaydeep Parmar** (Roll No: `23BIT133`)
-  * **Yatharth Tadvi** (Roll No: `23BIT143`)
-* **Project Mentor**: **Dr. Jigar Shah**, Department of ICT, PDEU
-* **Evaluation Presentation**: [`docs/Cocktail-Party-Mini-Project-Evaluation.pptx`](docs/Cocktail-Party-Mini-Project-Evaluation.pptx)
-
----
-
 ## 📑 Table of Contents
 1. [Introduction & The Cocktail Party Problem](#1-introduction--the-cocktail-party-problem)
 2. [Research Framework & Architecture](#2-research-framework--architecture)
@@ -38,7 +27,7 @@
 6. [Visual Mel-Spectrogram Comparisons](#6-visual-mel-spectrogram-comparisons)
 7. [Repository Structure](#7-repository-structure)
 8. [Installation & Quickstart Guide](#8-installation--quickstart-guide)
-9. [Citations & Acknowledgments](#9-citations--acknowledgments)
+9. [Citations & References](#9-citations--references)
 
 ---
 
@@ -106,7 +95,7 @@ $$	ext{SI-SDR}(s, \hat{s}) = 10 \log_{10} \left( rac{\|e_{	ext{target}}\|^2}{\|
 ---
 
 ### 3.2 Evolution: Spectrogram U-Net vs. 1D Conv-TasNet
-As detailed in our PDEU project presentation ([`docs/Cocktail-Party-Mini-Project-Evaluation.pptx`](docs/Cocktail-Party-Mini-Project-Evaluation.pptx)):
+Across our developmental progression:
 
 ```
 [Phase 1 Baseline: Spectrogram U-Net]
@@ -122,7 +111,7 @@ As detailed in our PDEU project presentation ([`docs/Cocktail-Party-Mini-Project
 
 ### 3.3 Scaling & Hardware Optimization (Phase 2A to 2B)
 
-Between Phase 2A and Phase 2B, we scaled our data and optimized training on NVIDIA Tesla T4 GPUs:
+Scaling data and optimizing GPU acceleration on NVIDIA Tesla T4:
 
 | Engineering Parameter | Phase 2A (Baseline Separation) | Phase 2B (Scaled & Optimized) | Impact |
 | :--- | :---: | :---: | :--- |
@@ -172,7 +161,7 @@ Using the standardized **NOIZEUS** corpus (8 kHz, 30 clean IEEE sentences `sp01`
 ---
 
 ### 4.3 In-Memory RAM Caching (Slashing Training from 30m to 18s/Epoch)
-* **The Bottleneck**: Google Colab required **~30 minutes per epoch** due to drive latency reading thousands of 40 kB audio files.
+* **The Bottleneck**: Cloud training required **~30 minutes per epoch** due to drive latency reading thousands of 40 kB audio files.
 * **The Engineering Fix**: Because the full corpus is ~77 MB, we implemented an in-memory RAM cache in `src/dataset.py`, pre-loading all waveforms at initialization.
 * **Outcome**: Disk I/O dropped to 0. Epoch training time collapsed from **30 minutes down to 18 SECONDS per epoch** (~100× acceleration).
 * **Overfitting Safeguards**: With only 24 clean training sentences, Conv-TasNet over-memorized speaker timbre (Train SI-SDR reached +13.43 dB while Val SI-SDR peaked at +9.31 dB and decayed to +8.85 dB). We added:
@@ -287,7 +276,7 @@ ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/
 │   │   ├── model.py                             # 2-Speaker Conv-TasNet architecture
 │   │   ├── train.py                             # FP16/AMP mixed precision training loop
 │   │   ├── evaluate.py                          # SI-SDR & uPIT evaluation suite
-│   │   └── utils.py                             # Audio utilities & metrics
+│   │   └── utils.py                             # Audio utilities & Wiener filter module
 │   ├── docs/
 │   │   ├── Phase1_Baseline_Denoising_Report.md  # Detailed Phase 1 report
 │   │   ├── Phase2_Speaker_Separation_Report.md  # Detailed Phase 2 report
@@ -301,34 +290,31 @@ ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/
 │       ├── Natural Wiener-Reconstructed Speaker 1.wav
 │       └── Natural Wiener-Reconstructed Speaker 2.wav
 │
-├── speech_enhancement/                          # [OBJECTIVE 2: Speech Enhancement]
-│   ├── notebooks/
-│   │   ├── 01_ClearerVoice_SOTA_Denoising.ipynb # Primary ClearVoice FRCRN/MossFormerGAN notebook
-│   │   └── 02_ConvTasNet_Baseline_Training.ipynb# Baseline Conv-TasNet training notebook
-│   ├── src/
-│   │   ├── config.py                            # Denoising hyperparameters & SNR settings
-│   │   ├── dataset.py                           # RAM-cached NOIZEUS PyTorch Dataset
-│   │   ├── model.py                             # 1D Conv-TasNet single-channel denoiser
-│   │   ├── train.py                             # Training loop with SNR jittering & early stopping
-│   │   ├── evaluate.py                          # Dual-metric evaluation suite (PESQ, STOI, SI-SDR)
-│   │   ├── eval_test_audio.py                   # Command-line test audio evaluation script
-│   │   └── utils.py                             # SI-SDR loss function
-│   ├── docs/
-│   │   ├── phase4_speech_enhancement_report.md  # Master Enhancement documentation
-│   │   └── phase4_speech_enhancement_evaluation_report.md # Multi-noise stress report
-│   ├── results/
-│   │   ├── mel_spectrogram_libri2mix_6sec.png   # 6.79s continuous LibriSpeech spectrogram
-│   │   ├── melspectrogram_convtasnet_noizeus.png# NOIZEUS compound multi-noise spectrogram
-│   │   ├── Original Ground Truth Clean Speech.wav
-│   │   ├── Corrupted Multi-Noise Mixture (Heavy Background Noise).wav
-│   │   └── ClearVoice FRCRN Denoised Output (Clean Restored Speech).wav
-│   └── samples/                                 # 3.0s held-out test audio samples
-│       ├── Original Ground Truth Clean Speech.wav
-│       ├── Corrupted Mixture (Speech + Multiple Simultaneous Noises).wav
-│       └── Model Denoised Output (Clean Speech Restored).wav
-│
-└── docs/                                        # Institutional Presentations & Slides
-    └── Cocktail-Party-Mini-Project-Evaluation.pptx  # Minor Project Presentation (PDEU ICT)
+└── speech_enhancement/                          # [OBJECTIVE 2: Speech Enhancement]
+    ├── notebooks/
+    │   ├── ClearerVoice_Speech_Enhancement_NOIZEUS.ipynb # Primary ClearVoice FRCRN/MossFormerGAN notebook
+    │   └── Speech_Enhancement_NOIZEUS.ipynb     # Baseline Conv-TasNet training notebook
+    ├── src/
+    │   ├── config.py                            # Denoising hyperparameters & SNR settings
+    │   ├── dataset.py                           # RAM-cached NOIZEUS PyTorch Dataset
+    │   ├── model.py                             # 1D Conv-TasNet single-channel denoiser
+    │   ├── train.py                             # Training loop with SNR jittering & early stopping
+    │   ├── evaluate.py                          # Dual-metric evaluation suite (PESQ, STOI, SI-SDR)
+    │   ├── eval_test_audio.py                   # Command-line test audio evaluation script
+    │   └── utils.py                             # SI-SDR loss function
+    ├── docs/
+    │   ├── phase4_speech_enhancement_report.md  # Master Enhancement documentation
+    │   └── phase4_speech_enhancement_evaluation_report.md # Multi-noise stress report
+    ├── results/
+    │   ├── mel_spectrogram_libri2mix_6sec.png   # 6.79s continuous LibriSpeech spectrogram
+    │   ├── melspectrogram_convtasnet_noizeus.png# NOIZEUS compound multi-noise spectrogram
+    │   ├── Original Ground Truth Clean Speech.wav
+    │   ├── Corrupted Multi-Noise Mixture (Heavy Background Noise).wav
+    │   └── ClearVoice FRCRN Denoised Output (Clean Restored Speech).wav
+    └── samples/                                 # 3.0s held-out test audio samples
+        ├── Original Ground Truth Clean Speech.wav
+        ├── Corrupted Mixture (Speech + Multiple Simultaneous Noises).wav
+        └── Model Denoised Output (Clean Speech Restored).wav
 ```
 
 ---
@@ -344,16 +330,14 @@ pip install -r requirements.txt
 
 ### 8.2 Google Colab Execution (One-Click)
 1. Open [Google Colab](https://colab.research.google.com/).
-2. Upload [`speech_enhancement/notebooks/01_ClearerVoice_SOTA_Denoising.ipynb`](speech_enhancement/notebooks/01_ClearerVoice_SOTA_Denoising.ipynb).
+2. Upload [`speech_enhancement/notebooks/ClearerVoice_Speech_Enhancement_NOIZEUS.ipynb`](speech_enhancement/notebooks/ClearerVoice_Speech_Enhancement_NOIZEUS.ipynb).
 3. Set runtime to **GPU (T4)** (`Runtime -> Change runtime type -> T4 GPU`).
 4. Run all cells to execute zero-shot compound multi-noise enhancement with interactive audio players and Mel-spectrogram rendering.
 
 ---
 
-## 9. Citations & Acknowledgments
+## 9. Citations & References
 
-* **Institutional Support**: Department of Information and Communication Technology (ICT), School of Technology, Pandit Deendayal Energy University (PDEU).
-* **Faculty Mentorship**: Deepest gratitude to **Dr. Jigar Shah** for guidance on model architecture, evaluation protocols, and research design.
 * **Corpora Providers**:
   * **LibriSpeech / Libri2Mix**: Panayotov et al. (ICASSP 2015) & Cosentino et al. (Interspeech 2020).
   * **NOIZEUS Speech Database**: Dr. Philipos C. Loizou, Speech Processing Lab, University of Texas at Dallas.
