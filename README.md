@@ -5,10 +5,16 @@
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-red.svg)](https://pytorch.org/)
 [![ClearerVoice-Studio](https://img.shields.io/badge/ClearerVoice--Studio-ICASSP%20Winner-green.svg)](https://github.com/modelscope/ClearerVoice-Studio)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Interactive Live Demo](https://img.shields.io/badge/Live%20Demo-Interactive%20Walkthrough-8A2BE2?style=for-the-badge&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)
+[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Site-success?style=for-the-badge&logo=github&logoColor=white)](https://jaydeep0832.github.io/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/)
+
+> 🚀 **[Click Here to Launch the Live Interactive Audio & Architecture Walkthrough (1-Click Browser Demo)](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)**  
+> *(Zero installation required — runs directly in your browser with an interactive audio lab, animated Conv-TasNet layer inspector, dynamic acoustic sliders, benchmark visualizer, and viva drill!)*
 
 ---
 
 ## 📑 Table of Contents
+0. [🌐 Live Interactive Browser Walkthrough](#-live-interactive-browser-walkthrough)
 1. [Introduction & The Cocktail Party Problem](#1-introduction--the-cocktail-party-problem)
 2. [Research Framework & Architecture](#2-research-framework--architecture)
 3. [Part I: Multi-Speaker Separation (The Classic Cocktail Party Problem)](#3-part-i-multi-speaker-separation-the-classic-cocktail-party-problem)
@@ -28,6 +34,25 @@
 7. [Repository Structure](#7-repository-structure)
 8. [Installation & Quickstart Guide](#8-installation--quickstart-guide)
 9. [Citations & References](#9-citations--references)
+
+---
+
+## 0. 🌐 Live Interactive Browser Walkthrough
+
+ClearParty includes an end-to-end interactive, animated web application (`index.html`) providing a live visual and acoustic walkthrough of the entire system.
+
+| Launch Method | Link | Description |
+|---|---|---|
+| **⚡ Instant 1-Click Preview** | **[Launch via htmlpreview.github.io](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)** | Runs instantly in any web browser without cloning or downloading. |
+| **🚀 GitHub Pages** | **[jaydeep0832.github.io/...](https://jaydeep0832.github.io/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/)** | Hosted via GitHub Pages. *(Activate under Settings → Pages → Deploy from branch `main`)* |
+| **💻 Local Offline Run** | `open index.html` | Open `index.html` directly in any web browser (Chrome, Edge, Firefox, Safari). Zero dependencies required. |
+
+### Interactive Features Included in the Web App:
+* 🎧 **Audio Lab & Oscilloscope**: Real-time canvas waveform visualizer simulating dual vocal pitch harmonics (Male 140 Hz Baritone vs Female 240 Hz Soprano) with mode switching between mixture, isolated speakers, and Wiener-restored audio.
+* 🧩 **Conv-TasNet Modular Topology**: Interactive SVG architecture diagram with a clickable layer inspector showing tensor dimensions and PyTorch implementations.
+* 🎚️ **Acoustic Parameter Explorer**: Dynamic sliders for mixture SNR, speaker power ratio, and compound noise complexity.
+* 📊 **Interactive Benchmark Visualizer**: Dynamic animated bar charts comparing SI-SDRi, PESQ, and STOI across all project milestones.
+* 🎯 **Viva Examination Flashcard Drill**: Interactive random quiz generator and technical Q&A accordion.
 
 ---
 
@@ -262,6 +287,8 @@ To verify cross-corpus generalization beyond short IEEE sentences, we tested on 
 
 ```
 ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/
+├── index.html                                   # 🌐 Interactive Live Walkthrough & Demo (Single-file HTML/CSS/JS)
+├── cocktail_party_problem_walkthrough.html      # 🌐 Standalone Walkthrough Mirror
 ├── README.md                                    # Master Technical Documentation (This file)
 ├── requirements.txt                             # Python dependencies
 ├── .gitignore                                   # Ignore checkpoints, data archives, and cache
