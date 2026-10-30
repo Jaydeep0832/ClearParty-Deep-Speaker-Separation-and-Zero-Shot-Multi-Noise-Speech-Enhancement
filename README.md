@@ -5,13 +5,7 @@
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-red.svg)](https://pytorch.org/)
 [![ClearerVoice-Studio](https://img.shields.io/badge/ClearerVoice--Studio-ICASSP%20Winner-green.svg)](https://github.com/modelscope/ClearerVoice-Studio)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Streamlit UI](https://img.shields.io/badge/Streamlit-Interactive%20UI-FF4B4B.svg?style=for-the-badge&logo=streamlit&logoColor=white)](app.py)
-[![Interactive Live Demo](https://img.shields.io/badge/Live%20Demo-Interactive%20Walkthrough-8A2BE2?style=for-the-badge&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)
-[![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Site-success?style=for-the-badge&logo=github&logoColor=white)](https://jaydeep0832.github.io/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/)
-
-> 🚀 **[Click Here to Launch the Live Interactive Audio & Architecture Walkthrough (1-Click Browser Demo)](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)**  
-> *(Zero installation required — runs directly in your browser with the SOTA 25-Test Matrix, audio audition dock, interactive canvas oscilloscope, dynamic acoustic sliders, and viva drill!)*  
-> 💡 *Or launch the local Python GUI frontend:* streamlit run app.py
+> 🚀 **Interactive Audio & Architecture Console:** Open **index.html** directly in any web browser to explore the SOTA 25-test benchmark matrix, interactive audio listening dock, real-time waveform visualizer, and viva defense guide with zero installation!
 
 ---
 
@@ -43,11 +37,10 @@
 
 ClearParty includes an end-to-end interactive, animated web application (`index.html`) providing a live visual and acoustic walkthrough of the entire system.
 
-| Launch Method | Link | Description |
+| Launch Method | Action / Command | Description |
 |---|---|---|
-| **⚡ Instant 1-Click Preview** | **[Launch via htmlpreview.github.io](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)** | Runs instantly in any web browser without cloning or downloading. |
-| **🚀 GitHub Pages** | **[jaydeep0832.github.io/...](https://jaydeep0832.github.io/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/)** | Hosted via GitHub Pages. *(Activate under Settings → Pages → Deploy from branch `main`)* |
-| **💻 Local Offline Run** | `open index.html` | Open `index.html` directly in any web browser (Chrome, Edge, Firefox, Safari). Zero dependencies required. |
+| **💻 Standalone Offline Run** | Double-click index.html | Opens directly in any modern web browser (Chrome, Edge, Firefox, Safari). Zero dependencies or build steps required. |
+| **🌐 Local HTTP Server** | python -m http.server 8000 | Serves the interactive console, real-time waveform visualizer, and all 75 test audio files at http://localhost:8000. |
 
 ### Interactive Features Included in the Web App:
 * 🎧 **Audio Lab & Oscilloscope**: Real-time canvas waveform visualizer simulating dual vocal pitch harmonics (Male 140 Hz Baritone vs Female 240 Hz Soprano) with mode switching between mixture, isolated speakers, and Wiener-restored audio.
