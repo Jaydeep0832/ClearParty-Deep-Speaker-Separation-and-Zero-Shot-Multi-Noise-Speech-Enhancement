@@ -5,11 +5,13 @@
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B-red.svg)](https://pytorch.org/)
 [![ClearerVoice-Studio](https://img.shields.io/badge/ClearerVoice--Studio-ICASSP%20Winner-green.svg)](https://github.com/modelscope/ClearerVoice-Studio)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Streamlit UI](https://img.shields.io/badge/Streamlit-Interactive%20UI-FF4B4B.svg?style=for-the-badge&logo=streamlit&logoColor=white)](app.py)
 [![Interactive Live Demo](https://img.shields.io/badge/Live%20Demo-Interactive%20Walkthrough-8A2BE2?style=for-the-badge&logo=googlechrome&logoColor=white)](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-Live%20Site-success?style=for-the-badge&logo=github&logoColor=white)](https://jaydeep0832.github.io/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/)
 
 > 🚀 **[Click Here to Launch the Live Interactive Audio & Architecture Walkthrough (1-Click Browser Demo)](https://htmlpreview.github.io/?https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement/blob/main/index.html)**  
-> *(Zero installation required — runs directly in your browser with an interactive audio lab, animated Conv-TasNet layer inspector, dynamic acoustic sliders, benchmark visualizer, and viva drill!)*
+> *(Zero installation required — runs directly in your browser with the SOTA 25-Test Matrix, audio audition dock, interactive canvas oscilloscope, dynamic acoustic sliders, and viva drill!)*  
+> 💡 *Or launch the local Python GUI frontend:* streamlit run app.py
 
 ---
 

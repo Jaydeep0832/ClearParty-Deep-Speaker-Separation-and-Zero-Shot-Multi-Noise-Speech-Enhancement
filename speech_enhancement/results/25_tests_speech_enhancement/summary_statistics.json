@@ -1,0 +1,21 @@
+{
+  "total_tests": 25,
+  "passed_tests": 25,
+  "model_accuracy_pct": 100.0,
+  "mean_sisdr_input_db": 5.21,
+  "mean_sisdr_enhanced_db": 9.85,
+  "mean_sisdr_gain_db": 4.64,
+  "std_sisdr_gain_db": 0.83,
+  "max_sisdr_gain_db": 6.31,
+  "min_sisdr_gain_db": 2.77,
+  "mean_pesq_input": 1.606,
+  "mean_pesq_enhanced": 1.874,
+  "mean_pesq_gain": 0.268,
+  "mean_stoi_input": 0.779,
+  "mean_stoi_enhanced": 0.813,
+  "mean_stoi_gain": 0.034,
+  "mean_noise_attenuation_pct": 65.0,
+  "max_noise_attenuation_pct": 76.6,
+  "mean_waveform_correlation_r": 0.9442,
+  "max_waveform_correlation_r": 0.9821
+}

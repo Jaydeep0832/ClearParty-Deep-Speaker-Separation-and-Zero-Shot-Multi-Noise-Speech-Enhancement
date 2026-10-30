@@ -1,0 +1,440 @@
+[
+  {
+    "test_id": 1,
+    "clean_file": "sp25.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "babble",
+      "airport",
+      "station"
+    ],
+    "noise_description": "babble + airport + station",
+    "target_snr_db": 0.0,
+    "duration_sec": 2.93,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_01_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_01_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_01_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 2,
+    "clean_file": "sp26.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "babble",
+      "restaurant",
+      "exhibition",
+      "airport"
+    ],
+    "noise_description": "babble + restaurant + exhibition + airport",
+    "target_snr_db": 1.5,
+    "duration_sec": 2.49,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_02_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_02_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_02_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 3,
+    "clean_file": "sp27.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "exhibition",
+      "station",
+      "street"
+    ],
+    "noise_description": "exhibition + station + street",
+    "target_snr_db": 2.0,
+    "duration_sec": 2.54,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_03_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_03_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_03_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 4,
+    "clean_file": "sp28.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "airport",
+      "street",
+      "babble",
+      "exhibition"
+    ],
+    "noise_description": "airport + street + babble + exhibition",
+    "target_snr_db": 2.5,
+    "duration_sec": 2.44,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_04_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_04_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_04_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 5,
+    "clean_file": "sp29.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "street",
+      "airport",
+      "car"
+    ],
+    "noise_description": "street + airport + car",
+    "target_snr_db": 0.0,
+    "duration_sec": 2.55,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_05_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_05_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_05_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 6,
+    "clean_file": "sp30.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "train",
+      "restaurant",
+      "airport",
+      "exhibition"
+    ],
+    "noise_description": "train + restaurant + airport + exhibition",
+    "target_snr_db": 3.0,
+    "duration_sec": 2.64,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_06_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_06_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_06_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 7,
+    "clean_file": "sp01.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "babble",
+      "airport",
+      "station"
+    ],
+    "noise_description": "babble + airport + station",
+    "target_snr_db": 3.5,
+    "duration_sec": 2.82,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_07_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_07_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_07_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 8,
+    "clean_file": "sp02.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "street",
+      "car",
+      "exhibition",
+      "train"
+    ],
+    "noise_description": "street + car + exhibition + train",
+    "target_snr_db": 4.0,
+    "duration_sec": 2.64,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_08_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_08_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_08_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 9,
+    "clean_file": "sp03.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "car",
+      "restaurant",
+      "station"
+    ],
+    "noise_description": "car + restaurant + station",
+    "target_snr_db": 4.5,
+    "duration_sec": 2.25,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_09_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_09_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_09_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 10,
+    "clean_file": "sp04.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "station",
+      "street",
+      "airport",
+      "babble"
+    ],
+    "noise_description": "station + street + airport + babble",
+    "target_snr_db": 5.0,
+    "duration_sec": 2.12,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_10_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_10_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_10_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 11,
+    "clean_file": "sp05.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "station",
+      "babble",
+      "train"
+    ],
+    "noise_description": "station + babble + train",
+    "target_snr_db": 5.0,
+    "duration_sec": 2.2,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_11_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_11_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_11_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 12,
+    "clean_file": "sp06.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "car",
+      "babble",
+      "station",
+      "restaurant"
+    ],
+    "noise_description": "car + babble + station + restaurant",
+    "target_snr_db": 5.5,
+    "duration_sec": 2.73,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_12_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_12_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_12_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 13,
+    "clean_file": "sp07.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "exhibition",
+      "babble",
+      "restaurant"
+    ],
+    "noise_description": "exhibition + babble + restaurant",
+    "target_snr_db": 5.0,
+    "duration_sec": 2.51,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_13_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_13_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_13_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 14,
+    "clean_file": "sp08.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "car",
+      "station",
+      "babble",
+      "exhibition"
+    ],
+    "noise_description": "car + station + babble + exhibition",
+    "target_snr_db": 4.0,
+    "duration_sec": 2.85,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_14_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_14_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_14_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 15,
+    "clean_file": "sp09.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "airport",
+      "station",
+      "street"
+    ],
+    "noise_description": "airport + station + street",
+    "target_snr_db": 5.0,
+    "duration_sec": 3.01,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_15_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_15_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_15_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 16,
+    "clean_file": "sp10.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "station",
+      "airport",
+      "car",
+      "exhibition"
+    ],
+    "noise_description": "station + airport + car + exhibition",
+    "target_snr_db": 6.0,
+    "duration_sec": 2.67,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_16_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_16_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_16_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 17,
+    "clean_file": "sp11.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "babble",
+      "street",
+      "station"
+    ],
+    "noise_description": "babble + street + station",
+    "target_snr_db": 6.5,
+    "duration_sec": 2.93,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_17_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_17_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_17_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 18,
+    "clean_file": "sp12.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "car",
+      "restaurant",
+      "street",
+      "airport"
+    ],
+    "noise_description": "car + restaurant + street + airport",
+    "target_snr_db": 7.0,
+    "duration_sec": 2.75,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_18_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_18_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_18_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 19,
+    "clean_file": "sp13.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "exhibition",
+      "airport",
+      "babble"
+    ],
+    "noise_description": "exhibition + airport + babble",
+    "target_snr_db": 7.5,
+    "duration_sec": 2.54,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_19_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_19_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_19_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 20,
+    "clean_file": "sp14.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "babble",
+      "street",
+      "restaurant",
+      "train"
+    ],
+    "noise_description": "babble + street + restaurant + train",
+    "target_snr_db": 8.0,
+    "duration_sec": 2.93,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_20_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_20_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_20_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 21,
+    "clean_file": "sp15.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "street",
+      "babble",
+      "restaurant"
+    ],
+    "noise_description": "street + babble + restaurant",
+    "target_snr_db": 8.5,
+    "duration_sec": 2.92,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_21_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_21_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_21_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 22,
+    "clean_file": "sp16.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "train",
+      "restaurant",
+      "exhibition",
+      "airport"
+    ],
+    "noise_description": "train + restaurant + exhibition + airport",
+    "target_snr_db": 9.0,
+    "duration_sec": 2.33,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_22_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_22_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_22_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 23,
+    "clean_file": "sp17.wav",
+    "noise_count": 3,
+    "noise_types": [
+      "airport",
+      "train",
+      "station"
+    ],
+    "noise_description": "airport + train + station",
+    "target_snr_db": 9.5,
+    "duration_sec": 2.4,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_23_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_23_mixture_3noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_23_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 24,
+    "clean_file": "sp18.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "station",
+      "airport",
+      "restaurant",
+      "babble"
+    ],
+    "noise_description": "station + airport + restaurant + babble",
+    "target_snr_db": 10.0,
+    "duration_sec": 2.28,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_24_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_24_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_24_mossformer_enhanced.wav"
+  },
+  {
+    "test_id": 25,
+    "clean_file": "sp19.wav",
+    "noise_count": 4,
+    "noise_types": [
+      "exhibition",
+      "street",
+      "train",
+      "station"
+    ],
+    "noise_description": "exhibition + street + train + station",
+    "target_snr_db": 7.5,
+    "duration_sec": 2.67,
+    "sample_rate": 8000,
+    "clean_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_25_clean.wav",
+    "mixture_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_25_mixture_4noises.wav",
+    "enhanced_wav": "C:\\Users\\jayde\\Speech_Enhancement\\results\\25_tests_mossformer_enhancement\\audio\\test_25_mossformer_enhanced.wav"
+  }
+]

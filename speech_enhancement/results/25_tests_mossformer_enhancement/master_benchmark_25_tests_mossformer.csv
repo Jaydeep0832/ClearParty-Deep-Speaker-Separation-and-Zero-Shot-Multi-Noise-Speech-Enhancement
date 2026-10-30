@@ -1,0 +1,26 @@
+test_id,clean_file,noise_count,noise_types,noise_description,target_snr_db,duration_sec,input_pesq,mossformer_pesq,pesq_gain,input_stoi,mossformer_stoi,stoi_gain,input_sisdr_db,mossformer_sisdr_db,sisdr_gain_db,noise_attenuation_pct,pearson_r,inference_time_sec,status
+1,sp25.wav,3,"['babble', 'airport', 'station']",babble + airport + station,0.0,2.93,1.645,2.121,0.475,0.604,0.766,0.163,0.01,9.07,9.06,88.91,0.9433,23.298,PASS
+2,sp26.wav,4,"['babble', 'restaurant', 'exhibition', 'airport']",babble + restaurant + exhibition + airport,1.5,2.49,1.456,2.546,1.09,0.733,0.909,0.177,1.43,10.15,8.73,87.49,0.955,19.272,PASS
+3,sp27.wav,3,"['exhibition', 'station', 'street']",exhibition + station + street,2.0,2.54,1.573,2.691,1.118,0.727,0.919,0.192,1.97,11.79,9.82,90.05,0.9684,20.697,PASS
+4,sp28.wav,4,"['airport', 'street', 'babble', 'exhibition']",airport + street + babble + exhibition,2.5,2.44,1.497,2.743,1.246,0.795,0.919,0.123,2.53,12.11,9.58,89.44,0.9706,20.007,PASS
+5,sp29.wav,3,"['street', 'airport', 'car']",street + airport + car,0.0,2.55,1.451,2.063,0.612,0.735,0.862,0.127,0.21,8.86,8.66,87.62,0.9408,21.799,PASS
+6,sp30.wav,4,"['train', 'restaurant', 'airport', 'exhibition']",train + restaurant + airport + exhibition,3.0,2.64,1.577,2.738,1.16,0.699,0.914,0.214,2.95,12.37,9.42,89.05,0.9722,22.149,PASS
+7,sp01.wav,3,"['babble', 'airport', 'station']",babble + airport + station,3.5,2.82,1.609,2.224,0.615,0.731,0.854,0.123,3.6,12.99,9.39,88.73,0.9758,23.518,PASS
+8,sp02.wav,4,"['street', 'car', 'exhibition', 'train']",street + car + exhibition + train,4.0,2.64,1.591,2.46,0.869,0.766,0.933,0.167,4.07,13.78,9.71,89.73,0.9797,23.135,PASS
+9,sp03.wav,3,"['car', 'restaurant', 'station']",car + restaurant + station,4.5,2.25,1.596,1.96,0.364,0.783,0.87,0.088,4.5,13.78,9.28,88.51,0.9797,19.356,PASS
+10,sp04.wav,4,"['station', 'street', 'airport', 'babble']",station + street + airport + babble,5.0,2.12,1.719,2.778,1.059,0.797,0.925,0.128,4.99,14.02,9.03,87.8,0.9807,17.754,PASS
+11,sp05.wav,3,"['station', 'babble', 'train']",station + babble + train,5.0,2.2,1.561,2.939,1.378,0.806,0.964,0.158,5.0,15.72,10.72,91.45,0.9869,18.546,PASS
+12,sp06.wav,4,"['car', 'babble', 'station', 'restaurant']",car + babble + station + restaurant,5.5,2.73,1.712,3.241,1.529,0.802,0.933,0.131,5.52,14.7,9.18,87.95,0.9835,23.179,PASS
+13,sp07.wav,3,"['exhibition', 'babble', 'restaurant']",exhibition + babble + restaurant,5.0,2.51,1.656,2.925,1.269,0.808,0.939,0.131,4.91,13.16,8.25,85.11,0.9767,20.678,PASS
+14,sp08.wav,4,"['car', 'station', 'babble', 'exhibition']",car + station + babble + exhibition,4.0,2.85,1.654,2.862,1.208,0.778,0.945,0.167,3.97,13.55,9.58,89.34,0.9786,23.53,PASS
+15,sp09.wav,3,"['airport', 'station', 'street']",airport + station + street,5.0,3.01,1.385,3.06,1.675,0.704,0.916,0.211,4.97,13.75,8.78,87.13,0.9795,25.056,PASS
+16,sp10.wav,4,"['station', 'airport', 'car', 'exhibition']",station + airport + car + exhibition,6.0,2.67,1.602,3.206,1.603,0.8,0.948,0.148,6.02,14.45,8.43,85.78,0.9825,22.607,PASS
+17,sp11.wav,3,"['babble', 'street', 'station']",babble + street + station,6.5,2.93,1.546,2.941,1.394,0.757,0.928,0.171,6.47,13.98,7.51,82.38,0.9806,23.586,PASS
+18,sp12.wav,4,"['car', 'restaurant', 'street', 'airport']",car + restaurant + street + airport,7.0,2.75,1.562,2.827,1.266,0.871,0.97,0.099,7.06,15.86,8.8,86.96,0.9873,22.517,PASS
+19,sp13.wav,3,"['exhibition', 'airport', 'babble']",exhibition + airport + babble,7.5,2.54,1.828,2.511,0.683,0.839,0.944,0.105,7.5,15.0,7.49,82.01,0.9845,21.351,PASS
+20,sp14.wav,4,"['babble', 'street', 'restaurant', 'train']",babble + street + restaurant + train,8.0,2.93,1.528,3.35,1.823,0.758,0.901,0.144,8.0,17.21,9.2,87.72,0.9906,24.53,PASS
+21,sp15.wav,3,"['street', 'babble', 'restaurant']",street + babble + restaurant,8.5,2.92,1.597,3.091,1.494,0.829,0.958,0.129,8.39,16.66,8.28,85.03,0.9894,24.301,PASS
+22,sp16.wav,4,"['train', 'restaurant', 'exhibition', 'airport']",train + restaurant + exhibition + airport,9.0,2.33,1.809,2.891,1.082,0.892,0.96,0.068,9.02,18.7,9.68,87.61,0.9933,19.35,PASS
+23,sp17.wav,3,"['airport', 'train', 'station']",airport + train + station,9.5,2.4,1.606,3.441,1.836,0.836,0.954,0.117,9.53,16.81,7.28,80.67,0.9897,20.216,PASS
+24,sp18.wav,4,"['station', 'airport', 'restaurant', 'babble']",station + airport + restaurant + babble,10.0,2.28,1.802,3.523,1.721,0.844,0.948,0.104,10.05,18.45,8.4,85.2,0.9929,19.894,PASS
+25,sp19.wav,4,"['exhibition', 'street', 'train', 'station']",exhibition + street + train + station,7.5,2.67,1.591,2.62,1.029,0.773,0.925,0.152,7.51,17.96,10.45,87.91,0.9921,23.37,PASS

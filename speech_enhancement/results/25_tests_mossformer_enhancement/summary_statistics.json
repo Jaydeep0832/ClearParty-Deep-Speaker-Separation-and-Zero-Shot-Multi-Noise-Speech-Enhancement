@@ -1,0 +1,53 @@
+{
+  "model_name": "MossFormerGAN_SE_16K (ClearerVoice-Studio)",
+  "total_tests": 25,
+  "pass_count": 25,
+  "pass_rate_pct": 100.0,
+  "accuracy_rating": "25/25 (100.0%)",
+  "metrics_summary": {
+    "pesq": {
+      "input_mean": 1.606,
+      "output_mean": 2.79,
+      "mean_gain": 1.184,
+      "std_gain": 0.413,
+      "min_gain": 0.364,
+      "max_gain": 1.836
+    },
+    "stoi": {
+      "input_mean": 0.779,
+      "output_mean": 0.92,
+      "mean_gain": 0.141,
+      "std_gain": 0.036,
+      "min_gain": 0.068,
+      "max_gain": 0.214
+    },
+    "sisdr": {
+      "input_mean_db": 5.21,
+      "output_mean_db": 14.2,
+      "mean_gain_db": 8.99,
+      "std_gain_db": 0.85,
+      "min_gain_db": 7.28,
+      "max_gain_db": 10.72
+    },
+    "noise_attenuation_pct": {
+      "mean": 87.18,
+      "std": 2.6,
+      "min": 80.67,
+      "max": 91.45
+    },
+    "pearson_r": {
+      "mean": 0.9782,
+      "std": 0.0139,
+      "min": 0.9408,
+      "max": 0.9933
+    }
+  },
+  "convtasnet_baseline_comparison": {
+    "mean_sisdr_gain_db": 4.64,
+    "mean_pesq_gain": 0.268,
+    "mean_stoi_gain": 0.034,
+    "mean_attenuation_pct": 65.01,
+    "mean_pearson_r": 0.9442,
+    "pass_rate_pct": 100.0
+  }
+}

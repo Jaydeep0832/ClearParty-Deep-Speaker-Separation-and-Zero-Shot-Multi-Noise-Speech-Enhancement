@@ -1,0 +1,1457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MossFormerGAN 25-Test Multi-Noise Speech Enhancement Benchmark</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0B0F19;
+            --bg-surface: #111827;
+            --bg-elevated: #1F2937;
+            --bg-card: #162032;
+            --border: #2D3748;
+            --border-light: #374151;
+            --primary: #38BDF8;
+            --primary-glow: rgba(56, 189, 248, 0.25);
+            --success: #34D399;
+            --success-glow: rgba(52, 211, 153, 0.25);
+            --warning: #FBBF24;
+            --danger: #F87171;
+            --accent: #818CF8;
+            --text-main: #F3F4F6;
+            --text-muted: #9CA3AF;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            background: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.5;
+            padding: 2rem 1.5rem;
+        }
+        .container {
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+        header {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(56, 189, 248, 0.08) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .header-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.8rem;
+        }
+        h1 {
+            font-size: 2.1rem;
+            font-weight: 800;
+            color: #FFFFFF;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+            max-width: 900px;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 2rem;
+        }
+        .kpi-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.4rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--primary);
+        }
+        .kpi-title {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+        .kpi-val {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: #FFF;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .kpi-gain {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.2rem;
+        }
+        .text-gain { color: var(--success); }
+        .text-boost { color: var(--primary); }
+        
+        .comp-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.8rem;
+            margin-bottom: 2rem;
+        }
+        .comp-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .bar-group {
+            margin-bottom: 1.2rem;
+        }
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .bar-track {
+            height: 12px;
+            background: var(--bg-elevated);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease;
+        }
+        .fill-moss { background: linear-gradient(90deg, #38BDF8, #818CF8); }
+        .fill-conv { background: #4B5563; }
+
+        .table-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.5rem;
+            overflow-x: auto;
+        }
+        .table-header-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .search-input {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: #FFF;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            outline: none;
+            min-width: 260px;
+        }
+        .search-input:focus { border-color: var(--primary); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        th {
+            background: var(--bg-elevated);
+            color: var(--text-muted);
+            font-weight: 600;
+            padding: 10px 12px;
+            border-bottom: 2px solid var(--border);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid var(--border-light);
+            vertical-align: middle;
+        }
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+        .id-col { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--primary); }
+        .snr-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-noise {
+            display: inline-block;
+            padding: 1px 6px;
+            background: rgba(129, 140, 248, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(129, 140, 248, 0.3);
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            margin-right: 4px;
+        }
+        .metric-val { font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+        .metric-gain { font-size: 0.78rem; font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+        .metric-in { font-size: 0.72rem; color: var(--text-muted); }
+        .meter-bar-container {
+            width: 70px;
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 2px;
+        }
+        .meter-bar {
+            height: 100%;
+            background: var(--success);
+            border-radius: 3px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .status-pass {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+        .audio-btn-group {
+            display: flex;
+            gap: 4px;
+            flex-wrap: nowrap;
+        }
+        .play-btn {
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 5px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            white-space: nowrap;
+        }
+        .play-btn:hover {
+            background: var(--border);
+            border-color: var(--primary);
+        }
+        .btn-mix { color: #FCA5A5; }
+        .btn-enh {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--primary);
+            border-color: rgba(56, 189, 248, 0.4);
+            font-weight: 600;
+        }
+        .btn-enh:hover {
+            background: var(--primary);
+            color: #000;
+        }
+        .audio-player-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(17, 24, 39, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            padding: 12px 24px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+        }
+        .audio-player-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        audio {
+            height: 36px;
+            min-width: 380px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-tag">&#9889; SOTA ClearerVoice-Studio Evaluation</div>
+            <h1>MossFormerGAN 25-Test Multi-Noise Speech Enhancement Benchmark</h1>
+            <p class="subtitle">
+                Rigorous evaluation across 25 realistic cocktail-party speech mixtures (3 to 4 simultaneous noises per utterance from NOIZEUS) with input SNRs from 0.0 dB to 10.0 dB.
+            </p>
+        </header>
+
+        <!-- KPI Grid -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-title">Pass / Accuracy Rate</div>
+                <div class="kpi-val text-gain">100.0%</div>
+                <div class="kpi-gain text-gain">25/25 Tests Passed</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Mean SI-SDR Gain</div>
+                <div class="kpi-val text-boost">+8.99 dB</div>
+                <div class="kpi-gain text-muted">In: 5.21 &rarr; Out: 14.20 dB</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Mean PESQ MOS Gain</div>
+                <div class="kpi-val text-gain">+1.184</div>
+                <div class="kpi-gain text-muted">In: 1.606 &rarr; Out: 2.790 MOS</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Mean STOI Gain</div>
+                <div class="kpi-val text-boost">+0.141</div>
+                <div class="kpi-gain text-muted">In: 0.779 &rarr; Out: 0.920</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Noise Attenuation</div>
+                <div class="kpi-val text-gain">87.2%</div>
+                <div class="kpi-gain text-muted">Energy Reduction</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-title">Pearson Fidelity (r)</div>
+                <div class="kpi-val text-boost">0.9782</div>
+                <div class="kpi-gain text-muted">Waveform Correlation</div>
+            </div>
+        </div>
+
+        <!-- Head to Head Comparison Card -->
+        <div class="comp-card">
+            <div class="comp-title">
+                <span>&#127942; Head-to-Head: MossFormerGAN SOTA vs Conv-TasNet Baseline</span>
+            </div>
+            
+            <div class="bar-group">
+                <div class="bar-label">
+                    <span><strong>SI-SDR Gain (dB)</strong></span>
+                    <span>Conv-TasNet: +4.64 dB &nbsp;|&nbsp; <strong style="color:var(--primary);">MossFormer: +8.99 dB (+94% higher)</strong></span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill fill-moss" style="width: 89.9%;"></div>
+                </div>
+            </div>
+
+            <div class="bar-group">
+                <div class="bar-label">
+                    <span><strong>PESQ MOS Improvement</strong></span>
+                    <span>Conv-TasNet: +0.268 &nbsp;|&nbsp; <strong style="color:var(--success);">MossFormer: +1.184 (4.4x greater boost)</strong></span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill fill-moss" style="width: 82.5%;"></div>
+                </div>
+            </div>
+
+            <div class="bar-group">
+                <div class="bar-label">
+                    <span><strong>Speech Intelligibility (STOI Gain)</strong></span>
+                    <span>Conv-TasNet: +0.034 &nbsp;|&nbsp; <strong style="color:var(--accent);">MossFormer: +0.141 (4.1x greater boost)</strong></span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill fill-moss" style="width: 70.5%;"></div>
+                </div>
+            </div>
+
+            <div class="bar-group" style="margin-bottom:0;">
+                <div class="bar-label">
+                    <span><strong>Noise Power Energy Attenuation (%)</strong></span>
+                    <span>Conv-TasNet: 65.0% &nbsp;|&nbsp; <strong style="color:var(--success);">MossFormer: 87.2% (+22.2% more noise removed)</strong></span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar-fill fill-moss" style="width: 87.2%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Master Benchmark Table -->
+        <div class="table-card">
+            <div class="table-header-controls">
+                <h2>Master 25-Test Results Matrix</h2>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search noise type, sentence, or SNR..." onkeyup="filterTable()">
+            </div>
+            
+            <table id="benchmarkTable">
+                <thead>
+                    <tr>
+                        <th>Test</th>
+                        <th>Speech</th>
+                        <th>SNR</th>
+                        <th>Noise Formulation (3-4 Types)</th>
+                        <th>SI-SDR</th>
+                        <th>PESQ (MOS)</th>
+                        <th>STOI</th>
+                        <th>Attenuation</th>
+                        <th>Pearson r</th>
+                        <th>Status</th>
+                        <th>Audio Audition</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+        <tr data-snr="0.0" data-noises="3">
+            <td class="id-col">#01</td>
+            <td><strong>sp25.wav</strong><br><small style="color:var(--text-muted);">2.93s</small></td>
+            <td><span class="snr-badge">0.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> babble + airport + station</td>
+            <td>
+                <div class="metric-val">9.07 dB</div>
+                <div class="metric-gain text-gain">+9.06 dB</div>
+                <div class="metric-in">In: 0.01</div>
+            </td>
+            <td>
+                <div class="metric-val">2.121</div>
+                <div class="metric-gain text-gain">+0.475</div>
+                <div class="metric-in">In: 1.645</div>
+            </td>
+            <td>
+                <div class="metric-val">0.766</div>
+                <div class="metric-gain text-gain">+0.163</div>
+                <div class="metric-in">In: 0.604</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:88.91%;"></div>
+                </div>
+                <small><strong>88.9%</strong></small>
+            </td>
+            <td><strong>0.9433</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 1)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 1)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 1)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="1.5" data-noises="4">
+            <td class="id-col">#02</td>
+            <td><strong>sp26.wav</strong><br><small style="color:var(--text-muted);">2.49s</small></td>
+            <td><span class="snr-badge">1.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> babble + restaurant + exhibition + airport</td>
+            <td>
+                <div class="metric-val">10.15 dB</div>
+                <div class="metric-gain text-gain">+8.73 dB</div>
+                <div class="metric-in">In: 1.43</div>
+            </td>
+            <td>
+                <div class="metric-val">2.546</div>
+                <div class="metric-gain text-gain">+1.090</div>
+                <div class="metric-in">In: 1.456</div>
+            </td>
+            <td>
+                <div class="metric-val">0.909</div>
+                <div class="metric-gain text-gain">+0.177</div>
+                <div class="metric-in">In: 0.733</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.49%;"></div>
+                </div>
+                <small><strong>87.5%</strong></small>
+            </td>
+            <td><strong>0.9550</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 2)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 2)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 2)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="2.0" data-noises="3">
+            <td class="id-col">#03</td>
+            <td><strong>sp27.wav</strong><br><small style="color:var(--text-muted);">2.54s</small></td>
+            <td><span class="snr-badge">2.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> exhibition + station + street</td>
+            <td>
+                <div class="metric-val">11.79 dB</div>
+                <div class="metric-gain text-gain">+9.82 dB</div>
+                <div class="metric-in">In: 1.97</div>
+            </td>
+            <td>
+                <div class="metric-val">2.691</div>
+                <div class="metric-gain text-gain">+1.118</div>
+                <div class="metric-in">In: 1.573</div>
+            </td>
+            <td>
+                <div class="metric-val">0.919</div>
+                <div class="metric-gain text-gain">+0.192</div>
+                <div class="metric-in">In: 0.727</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:90.05%;"></div>
+                </div>
+                <small><strong>90.0%</strong></small>
+            </td>
+            <td><strong>0.9684</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 3)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 3)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 3)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="2.5" data-noises="4">
+            <td class="id-col">#04</td>
+            <td><strong>sp28.wav</strong><br><small style="color:var(--text-muted);">2.44s</small></td>
+            <td><span class="snr-badge">2.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> airport + street + babble + exhibition</td>
+            <td>
+                <div class="metric-val">12.11 dB</div>
+                <div class="metric-gain text-gain">+9.58 dB</div>
+                <div class="metric-in">In: 2.53</div>
+            </td>
+            <td>
+                <div class="metric-val">2.743</div>
+                <div class="metric-gain text-gain">+1.246</div>
+                <div class="metric-in">In: 1.497</div>
+            </td>
+            <td>
+                <div class="metric-val">0.919</div>
+                <div class="metric-gain text-gain">+0.123</div>
+                <div class="metric-in">In: 0.795</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:89.44%;"></div>
+                </div>
+                <small><strong>89.4%</strong></small>
+            </td>
+            <td><strong>0.9706</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 4)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 4)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 4)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="0.0" data-noises="3">
+            <td class="id-col">#05</td>
+            <td><strong>sp29.wav</strong><br><small style="color:var(--text-muted);">2.55s</small></td>
+            <td><span class="snr-badge">0.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> street + airport + car</td>
+            <td>
+                <div class="metric-val">8.86 dB</div>
+                <div class="metric-gain text-gain">+8.66 dB</div>
+                <div class="metric-in">In: 0.21</div>
+            </td>
+            <td>
+                <div class="metric-val">2.063</div>
+                <div class="metric-gain text-gain">+0.612</div>
+                <div class="metric-in">In: 1.451</div>
+            </td>
+            <td>
+                <div class="metric-val">0.862</div>
+                <div class="metric-gain text-gain">+0.127</div>
+                <div class="metric-in">In: 0.735</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.62%;"></div>
+                </div>
+                <small><strong>87.6%</strong></small>
+            </td>
+            <td><strong>0.9408</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 5)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 5)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 5)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="3.0" data-noises="4">
+            <td class="id-col">#06</td>
+            <td><strong>sp30.wav</strong><br><small style="color:var(--text-muted);">2.64s</small></td>
+            <td><span class="snr-badge">3.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> train + restaurant + airport + exhibition</td>
+            <td>
+                <div class="metric-val">12.37 dB</div>
+                <div class="metric-gain text-gain">+9.42 dB</div>
+                <div class="metric-in">In: 2.95</div>
+            </td>
+            <td>
+                <div class="metric-val">2.738</div>
+                <div class="metric-gain text-gain">+1.160</div>
+                <div class="metric-in">In: 1.577</div>
+            </td>
+            <td>
+                <div class="metric-val">0.914</div>
+                <div class="metric-gain text-gain">+0.214</div>
+                <div class="metric-in">In: 0.699</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:89.05%;"></div>
+                </div>
+                <small><strong>89.0%</strong></small>
+            </td>
+            <td><strong>0.9722</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 6)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 6)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 6)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="3.5" data-noises="3">
+            <td class="id-col">#07</td>
+            <td><strong>sp01.wav</strong><br><small style="color:var(--text-muted);">2.82s</small></td>
+            <td><span class="snr-badge">3.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> babble + airport + station</td>
+            <td>
+                <div class="metric-val">12.99 dB</div>
+                <div class="metric-gain text-gain">+9.39 dB</div>
+                <div class="metric-in">In: 3.60</div>
+            </td>
+            <td>
+                <div class="metric-val">2.224</div>
+                <div class="metric-gain text-gain">+0.615</div>
+                <div class="metric-in">In: 1.609</div>
+            </td>
+            <td>
+                <div class="metric-val">0.854</div>
+                <div class="metric-gain text-gain">+0.123</div>
+                <div class="metric-in">In: 0.731</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:88.73%;"></div>
+                </div>
+                <small><strong>88.7%</strong></small>
+            </td>
+            <td><strong>0.9758</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 7)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 7)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 7)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="4.0" data-noises="4">
+            <td class="id-col">#08</td>
+            <td><strong>sp02.wav</strong><br><small style="color:var(--text-muted);">2.64s</small></td>
+            <td><span class="snr-badge">4.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> street + car + exhibition + train</td>
+            <td>
+                <div class="metric-val">13.78 dB</div>
+                <div class="metric-gain text-gain">+9.71 dB</div>
+                <div class="metric-in">In: 4.07</div>
+            </td>
+            <td>
+                <div class="metric-val">2.460</div>
+                <div class="metric-gain text-gain">+0.869</div>
+                <div class="metric-in">In: 1.591</div>
+            </td>
+            <td>
+                <div class="metric-val">0.933</div>
+                <div class="metric-gain text-gain">+0.167</div>
+                <div class="metric-in">In: 0.766</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:89.73%;"></div>
+                </div>
+                <small><strong>89.7%</strong></small>
+            </td>
+            <td><strong>0.9797</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 8)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 8)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 8)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="4.5" data-noises="3">
+            <td class="id-col">#09</td>
+            <td><strong>sp03.wav</strong><br><small style="color:var(--text-muted);">2.25s</small></td>
+            <td><span class="snr-badge">4.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> car + restaurant + station</td>
+            <td>
+                <div class="metric-val">13.78 dB</div>
+                <div class="metric-gain text-gain">+9.28 dB</div>
+                <div class="metric-in">In: 4.50</div>
+            </td>
+            <td>
+                <div class="metric-val">1.960</div>
+                <div class="metric-gain text-gain">+0.364</div>
+                <div class="metric-in">In: 1.596</div>
+            </td>
+            <td>
+                <div class="metric-val">0.870</div>
+                <div class="metric-gain text-gain">+0.088</div>
+                <div class="metric-in">In: 0.783</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:88.51%;"></div>
+                </div>
+                <small><strong>88.5%</strong></small>
+            </td>
+            <td><strong>0.9797</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 9)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 9)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 9)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="5.0" data-noises="4">
+            <td class="id-col">#10</td>
+            <td><strong>sp04.wav</strong><br><small style="color:var(--text-muted);">2.12s</small></td>
+            <td><span class="snr-badge">5.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> station + street + airport + babble</td>
+            <td>
+                <div class="metric-val">14.02 dB</div>
+                <div class="metric-gain text-gain">+9.03 dB</div>
+                <div class="metric-in">In: 4.99</div>
+            </td>
+            <td>
+                <div class="metric-val">2.778</div>
+                <div class="metric-gain text-gain">+1.059</div>
+                <div class="metric-in">In: 1.719</div>
+            </td>
+            <td>
+                <div class="metric-val">0.925</div>
+                <div class="metric-gain text-gain">+0.128</div>
+                <div class="metric-in">In: 0.797</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.8%;"></div>
+                </div>
+                <small><strong>87.8%</strong></small>
+            </td>
+            <td><strong>0.9807</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 10)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 10)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 10)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="5.0" data-noises="3">
+            <td class="id-col">#11</td>
+            <td><strong>sp05.wav</strong><br><small style="color:var(--text-muted);">2.20s</small></td>
+            <td><span class="snr-badge">5.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> station + babble + train</td>
+            <td>
+                <div class="metric-val">15.72 dB</div>
+                <div class="metric-gain text-gain">+10.72 dB</div>
+                <div class="metric-in">In: 5.00</div>
+            </td>
+            <td>
+                <div class="metric-val">2.939</div>
+                <div class="metric-gain text-gain">+1.378</div>
+                <div class="metric-in">In: 1.561</div>
+            </td>
+            <td>
+                <div class="metric-val">0.964</div>
+                <div class="metric-gain text-gain">+0.158</div>
+                <div class="metric-in">In: 0.806</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:91.45%;"></div>
+                </div>
+                <small><strong>91.5%</strong></small>
+            </td>
+            <td><strong>0.9869</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 11)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 11)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 11)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="5.5" data-noises="4">
+            <td class="id-col">#12</td>
+            <td><strong>sp06.wav</strong><br><small style="color:var(--text-muted);">2.73s</small></td>
+            <td><span class="snr-badge">5.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> car + babble + station + restaurant</td>
+            <td>
+                <div class="metric-val">14.70 dB</div>
+                <div class="metric-gain text-gain">+9.18 dB</div>
+                <div class="metric-in">In: 5.52</div>
+            </td>
+            <td>
+                <div class="metric-val">3.241</div>
+                <div class="metric-gain text-gain">+1.529</div>
+                <div class="metric-in">In: 1.712</div>
+            </td>
+            <td>
+                <div class="metric-val">0.933</div>
+                <div class="metric-gain text-gain">+0.131</div>
+                <div class="metric-in">In: 0.802</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.95%;"></div>
+                </div>
+                <small><strong>88.0%</strong></small>
+            </td>
+            <td><strong>0.9835</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 12)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 12)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 12)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="5.0" data-noises="3">
+            <td class="id-col">#13</td>
+            <td><strong>sp07.wav</strong><br><small style="color:var(--text-muted);">2.51s</small></td>
+            <td><span class="snr-badge">5.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> exhibition + babble + restaurant</td>
+            <td>
+                <div class="metric-val">13.16 dB</div>
+                <div class="metric-gain text-gain">+8.25 dB</div>
+                <div class="metric-in">In: 4.91</div>
+            </td>
+            <td>
+                <div class="metric-val">2.925</div>
+                <div class="metric-gain text-gain">+1.269</div>
+                <div class="metric-in">In: 1.656</div>
+            </td>
+            <td>
+                <div class="metric-val">0.939</div>
+                <div class="metric-gain text-gain">+0.131</div>
+                <div class="metric-in">In: 0.808</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:85.11%;"></div>
+                </div>
+                <small><strong>85.1%</strong></small>
+            </td>
+            <td><strong>0.9767</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 13)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 13)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 13)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="4.0" data-noises="4">
+            <td class="id-col">#14</td>
+            <td><strong>sp08.wav</strong><br><small style="color:var(--text-muted);">2.85s</small></td>
+            <td><span class="snr-badge">4.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> car + station + babble + exhibition</td>
+            <td>
+                <div class="metric-val">13.55 dB</div>
+                <div class="metric-gain text-gain">+9.58 dB</div>
+                <div class="metric-in">In: 3.97</div>
+            </td>
+            <td>
+                <div class="metric-val">2.862</div>
+                <div class="metric-gain text-gain">+1.208</div>
+                <div class="metric-in">In: 1.654</div>
+            </td>
+            <td>
+                <div class="metric-val">0.945</div>
+                <div class="metric-gain text-gain">+0.167</div>
+                <div class="metric-in">In: 0.778</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:89.34%;"></div>
+                </div>
+                <small><strong>89.3%</strong></small>
+            </td>
+            <td><strong>0.9786</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 14)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 14)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 14)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="5.0" data-noises="3">
+            <td class="id-col">#15</td>
+            <td><strong>sp09.wav</strong><br><small style="color:var(--text-muted);">3.01s</small></td>
+            <td><span class="snr-badge">5.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> airport + station + street</td>
+            <td>
+                <div class="metric-val">13.75 dB</div>
+                <div class="metric-gain text-gain">+8.78 dB</div>
+                <div class="metric-in">In: 4.97</div>
+            </td>
+            <td>
+                <div class="metric-val">3.060</div>
+                <div class="metric-gain text-gain">+1.675</div>
+                <div class="metric-in">In: 1.385</div>
+            </td>
+            <td>
+                <div class="metric-val">0.916</div>
+                <div class="metric-gain text-gain">+0.211</div>
+                <div class="metric-in">In: 0.704</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.13%;"></div>
+                </div>
+                <small><strong>87.1%</strong></small>
+            </td>
+            <td><strong>0.9795</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 15)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 15)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 15)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="6.0" data-noises="4">
+            <td class="id-col">#16</td>
+            <td><strong>sp10.wav</strong><br><small style="color:var(--text-muted);">2.67s</small></td>
+            <td><span class="snr-badge">6.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> station + airport + car + exhibition</td>
+            <td>
+                <div class="metric-val">14.45 dB</div>
+                <div class="metric-gain text-gain">+8.43 dB</div>
+                <div class="metric-in">In: 6.02</div>
+            </td>
+            <td>
+                <div class="metric-val">3.206</div>
+                <div class="metric-gain text-gain">+1.603</div>
+                <div class="metric-in">In: 1.602</div>
+            </td>
+            <td>
+                <div class="metric-val">0.948</div>
+                <div class="metric-gain text-gain">+0.148</div>
+                <div class="metric-in">In: 0.800</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:85.78%;"></div>
+                </div>
+                <small><strong>85.8%</strong></small>
+            </td>
+            <td><strong>0.9825</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 16)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 16)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 16)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="6.5" data-noises="3">
+            <td class="id-col">#17</td>
+            <td><strong>sp11.wav</strong><br><small style="color:var(--text-muted);">2.93s</small></td>
+            <td><span class="snr-badge">6.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> babble + street + station</td>
+            <td>
+                <div class="metric-val">13.98 dB</div>
+                <div class="metric-gain text-gain">+7.51 dB</div>
+                <div class="metric-in">In: 6.47</div>
+            </td>
+            <td>
+                <div class="metric-val">2.941</div>
+                <div class="metric-gain text-gain">+1.394</div>
+                <div class="metric-in">In: 1.546</div>
+            </td>
+            <td>
+                <div class="metric-val">0.928</div>
+                <div class="metric-gain text-gain">+0.171</div>
+                <div class="metric-in">In: 0.757</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:82.38%;"></div>
+                </div>
+                <small><strong>82.4%</strong></small>
+            </td>
+            <td><strong>0.9806</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 17)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 17)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 17)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="7.0" data-noises="4">
+            <td class="id-col">#18</td>
+            <td><strong>sp12.wav</strong><br><small style="color:var(--text-muted);">2.75s</small></td>
+            <td><span class="snr-badge">7.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> car + restaurant + street + airport</td>
+            <td>
+                <div class="metric-val">15.86 dB</div>
+                <div class="metric-gain text-gain">+8.80 dB</div>
+                <div class="metric-in">In: 7.06</div>
+            </td>
+            <td>
+                <div class="metric-val">2.827</div>
+                <div class="metric-gain text-gain">+1.266</div>
+                <div class="metric-in">In: 1.562</div>
+            </td>
+            <td>
+                <div class="metric-val">0.970</div>
+                <div class="metric-gain text-gain">+0.099</div>
+                <div class="metric-in">In: 0.871</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:86.96%;"></div>
+                </div>
+                <small><strong>87.0%</strong></small>
+            </td>
+            <td><strong>0.9873</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 18)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 18)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 18)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="7.5" data-noises="3">
+            <td class="id-col">#19</td>
+            <td><strong>sp13.wav</strong><br><small style="color:var(--text-muted);">2.54s</small></td>
+            <td><span class="snr-badge">7.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> exhibition + airport + babble</td>
+            <td>
+                <div class="metric-val">15.00 dB</div>
+                <div class="metric-gain text-gain">+7.49 dB</div>
+                <div class="metric-in">In: 7.50</div>
+            </td>
+            <td>
+                <div class="metric-val">2.511</div>
+                <div class="metric-gain text-gain">+0.683</div>
+                <div class="metric-in">In: 1.828</div>
+            </td>
+            <td>
+                <div class="metric-val">0.944</div>
+                <div class="metric-gain text-gain">+0.105</div>
+                <div class="metric-in">In: 0.839</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:82.01%;"></div>
+                </div>
+                <small><strong>82.0%</strong></small>
+            </td>
+            <td><strong>0.9845</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 19)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 19)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 19)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="8.0" data-noises="4">
+            <td class="id-col">#20</td>
+            <td><strong>sp14.wav</strong><br><small style="color:var(--text-muted);">2.93s</small></td>
+            <td><span class="snr-badge">8.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> babble + street + restaurant + train</td>
+            <td>
+                <div class="metric-val">17.21 dB</div>
+                <div class="metric-gain text-gain">+9.20 dB</div>
+                <div class="metric-in">In: 8.00</div>
+            </td>
+            <td>
+                <div class="metric-val">3.350</div>
+                <div class="metric-gain text-gain">+1.823</div>
+                <div class="metric-in">In: 1.528</div>
+            </td>
+            <td>
+                <div class="metric-val">0.901</div>
+                <div class="metric-gain text-gain">+0.144</div>
+                <div class="metric-in">In: 0.758</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.72%;"></div>
+                </div>
+                <small><strong>87.7%</strong></small>
+            </td>
+            <td><strong>0.9906</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 20)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 20)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 20)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="8.5" data-noises="3">
+            <td class="id-col">#21</td>
+            <td><strong>sp15.wav</strong><br><small style="color:var(--text-muted);">2.92s</small></td>
+            <td><span class="snr-badge">8.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> street + babble + restaurant</td>
+            <td>
+                <div class="metric-val">16.66 dB</div>
+                <div class="metric-gain text-gain">+8.28 dB</div>
+                <div class="metric-in">In: 8.39</div>
+            </td>
+            <td>
+                <div class="metric-val">3.091</div>
+                <div class="metric-gain text-gain">+1.494</div>
+                <div class="metric-in">In: 1.597</div>
+            </td>
+            <td>
+                <div class="metric-val">0.958</div>
+                <div class="metric-gain text-gain">+0.129</div>
+                <div class="metric-in">In: 0.829</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:85.03%;"></div>
+                </div>
+                <small><strong>85.0%</strong></small>
+            </td>
+            <td><strong>0.9894</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 21)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 21)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 21)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="9.0" data-noises="4">
+            <td class="id-col">#22</td>
+            <td><strong>sp16.wav</strong><br><small style="color:var(--text-muted);">2.33s</small></td>
+            <td><span class="snr-badge">9.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> train + restaurant + exhibition + airport</td>
+            <td>
+                <div class="metric-val">18.70 dB</div>
+                <div class="metric-gain text-gain">+9.68 dB</div>
+                <div class="metric-in">In: 9.02</div>
+            </td>
+            <td>
+                <div class="metric-val">2.891</div>
+                <div class="metric-gain text-gain">+1.082</div>
+                <div class="metric-in">In: 1.809</div>
+            </td>
+            <td>
+                <div class="metric-val">0.960</div>
+                <div class="metric-gain text-gain">+0.068</div>
+                <div class="metric-in">In: 0.892</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.61%;"></div>
+                </div>
+                <small><strong>87.6%</strong></small>
+            </td>
+            <td><strong>0.9933</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 22)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 22)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 22)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="9.5" data-noises="3">
+            <td class="id-col">#23</td>
+            <td><strong>sp17.wav</strong><br><small style="color:var(--text-muted);">2.40s</small></td>
+            <td><span class="snr-badge">9.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">3 Noises</span> airport + train + station</td>
+            <td>
+                <div class="metric-val">16.81 dB</div>
+                <div class="metric-gain text-gain">+7.28 dB</div>
+                <div class="metric-in">In: 9.53</div>
+            </td>
+            <td>
+                <div class="metric-val">3.441</div>
+                <div class="metric-gain text-gain">+1.836</div>
+                <div class="metric-in">In: 1.606</div>
+            </td>
+            <td>
+                <div class="metric-val">0.954</div>
+                <div class="metric-gain text-gain">+0.117</div>
+                <div class="metric-in">In: 0.836</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:80.67%;"></div>
+                </div>
+                <small><strong>80.7%</strong></small>
+            </td>
+            <td><strong>0.9897</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 23)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 23)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 23)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="10.0" data-noises="4">
+            <td class="id-col">#24</td>
+            <td><strong>sp18.wav</strong><br><small style="color:var(--text-muted);">2.28s</small></td>
+            <td><span class="snr-badge">10.0 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> station + airport + restaurant + babble</td>
+            <td>
+                <div class="metric-val">18.45 dB</div>
+                <div class="metric-gain text-gain">+8.40 dB</div>
+                <div class="metric-in">In: 10.05</div>
+            </td>
+            <td>
+                <div class="metric-val">3.523</div>
+                <div class="metric-gain text-gain">+1.721</div>
+                <div class="metric-in">In: 1.802</div>
+            </td>
+            <td>
+                <div class="metric-val">0.948</div>
+                <div class="metric-gain text-gain">+0.104</div>
+                <div class="metric-in">In: 0.844</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:85.2%;"></div>
+                </div>
+                <small><strong>85.2%</strong></small>
+            </td>
+            <td><strong>0.9929</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 24)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 24)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 24)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+
+        <tr data-snr="7.5" data-noises="4">
+            <td class="id-col">#25</td>
+            <td><strong>sp19.wav</strong><br><small style="color:var(--text-muted);">2.67s</small></td>
+            <td><span class="snr-badge">7.5 dB</span></td>
+            <td style="max-width:220px; font-size:0.85rem;"><span class="badge-noise">4 Noises</span> exhibition + street + train + station</td>
+            <td>
+                <div class="metric-val">17.96 dB</div>
+                <div class="metric-gain text-gain">+10.45 dB</div>
+                <div class="metric-in">In: 7.51</div>
+            </td>
+            <td>
+                <div class="metric-val">2.620</div>
+                <div class="metric-gain text-gain">+1.029</div>
+                <div class="metric-in">In: 1.591</div>
+            </td>
+            <td>
+                <div class="metric-val">0.925</div>
+                <div class="metric-gain text-gain">+0.152</div>
+                <div class="metric-in">In: 0.773</div>
+            </td>
+            <td>
+                <div class="meter-bar-container">
+                    <div class="meter-bar" style="width:87.91%;"></div>
+                </div>
+                <small><strong>87.9%</strong></small>
+            </td>
+            <td><strong>0.9921</strong></td>
+            <td><span class="status-badge status-pass">PASS</span></td>
+            <td>
+                <div class="audio-btn-group">
+                    <button class="play-btn" onclick="playAudio('clean', 25)">&#9658; Clean</button>
+                    <button class="play-btn btn-mix" onclick="playAudio('mix', 25)">&#9658; Mixture</button>
+                    <button class="play-btn btn-enh" onclick="playAudio('enh', 25)">&#9658; MossFormer</button>
+                </div>
+            </td>
+        </tr>
+        
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Floating Audio Player Bar -->
+    <div id="playerBar" class="audio-player-bar">
+        <div class="audio-player-info">
+            <span id="playerTrackType" class="badge-noise">MOSSFORMER</span>
+            <strong id="playerTitle">Test #01 Enhanced Speech</strong>
+        </div>
+        <audio id="audioElement" controls autoplay></audio>
+        <button class="play-btn" onclick="closePlayer()">&#10005; Close</button>
+    </div>
+
+    <script>
+        function filterTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll("#benchmarkTable tbody tr");
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(input) ? "" : "none";
+            });
+        }
+
+        function playAudio(type, testId) {
+            const padId = String(testId).padStart(2, '0');
+            const playerBar = document.getElementById("playerBar");
+            const audioElem = document.getElementById("audioElement");
+            const trackTypeElem = document.getElementById("playerTrackType");
+            const titleElem = document.getElementById("playerTitle");
+
+            let url = "";
+            let label = "";
+
+            if (type === 'clean') {
+                url = "audio/test_" + padId + "_clean.wav";
+                label = "Clean Ground Truth Reference";
+                trackTypeElem.innerText = "CLEAN";
+                trackTypeElem.style.color = "#34D399";
+            } else if (type === 'mix') {
+                // Determine 3 or 4 noises from table row
+                const row = document.querySelector(`tr[data-snr] .id-col:contains('#${padId}')`);
+                url = "audio/test_" + padId + "_mixture_3noises.wav";
+                // Fallback check
+                label = "Compound Multi-Noise Mixture (Noisy Input)";
+                trackTypeElem.innerText = "MIXTURE";
+                trackTypeElem.style.color = "#F87171";
+            } else {
+                url = "audio/test_" + padId + "_mossformer_enhanced.wav";
+                label = "MossFormerGAN SOTA Enhanced Output";
+                trackTypeElem.innerText = "MOSSFORMER";
+                trackTypeElem.style.color = "#38BDF8";
+            }
+
+            titleElem.innerText = "Test #" + padId + " - " + label;
+            audioElem.src = url;
+            playerBar.style.display = "flex";
+            audioElem.play().catch(e => console.log("Playback interaction required or path relative:", e));
+        }
+
+        function closePlayer() {
+            const audioElem = document.getElementById("audioElement");
+            audioElem.pause();
+            document.getElementById("playerBar").style.display = "none";
+        }
+    </script>
+</body>
+</html>

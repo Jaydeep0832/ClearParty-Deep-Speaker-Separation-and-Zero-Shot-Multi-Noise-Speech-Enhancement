@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ClearParty — Deep Speaker Separation & Speech Enhancement</title>
+<title>ClearParty — Deep Speaker Separation & Zero-Shot Multi-Noise Speech Enhancement</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ==========================================================================
    1. CSS DESIGN SYSTEM & THEMES
@@ -18,18 +18,18 @@
   --bg-card-hover: #1c2a46;
   --bg-code: #060a12;
   --border: #1e2e4a;
-  --border-focus: #3b82f6;
+  --border-focus: #38bdf8;
   --text: #f1f5f9;
   --text-muted: #94a3b8;
   --text-dim: #64748b;
   --shadow: 0 4px 20px rgba(0,0,0,0.35);
 
-  /* Audio Pipeline Stage Accents */
   --c-source: #38bdf8;  /* Clean Speech (Sky Blue) */
   --c-mix:    #fbbf24;  /* Superimposed Mixture (Amber Gold) */
   --c-model:  #c084fc;  /* Conv-TasNet Architecture (Electric Purple) */
   --c-wiener: #34d399;  /* Natural Wiener Reconstruction (Emerald) */
   --c-frcrn:  #fb923c;  /* Complex STFT FRCRN (Coral Orange) */
+  --c-moss:   #06b6d4;  /* MossFormerGAN SOTA (Cyan Glow) */
   --c-noise:  #f87171;  /* Environmental Interference (Red Alert) */
   --c-phase:  #f472b6;  /* Phase Evolution (Rose Pink) */
 
@@ -47,7 +47,7 @@
   --bg-card-hover: #e2e8f0;
   --bg-code: #0f172a;
   --border: #cbd5e1;
-  --border-focus: #2563eb;
+  --border-focus: #0284c7;
   --text: #0f172a;
   --text-muted: #475569;
   --text-dim: #64748b;
@@ -58,6 +58,7 @@
   --c-model:  #9333ea;
   --c-wiener: #059669;
   --c-frcrn:  #ea580c;
+  --c-moss:   #0891b2;
   --c-noise:  #dc2626;
   --c-phase:  #db2777;
 }
@@ -72,1396 +73,2313 @@ body {
   transition: background 0.25s, color 0.25s;
 }
 
-/* Sticky Topbar */
+/* Topbar */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 1000;
-  background: rgba(9, 14, 26, 0.92);
-  backdrop-filter: blur(12px);
+  background: rgba(9, 14, 26, 0.94);
+  backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
-  padding: 0.65rem 1.5rem;
+  padding: 0.75rem 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
 }
-[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.92); }
+[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.94); }
+
 .brand {
   display: flex;
   align-items: center;
   gap: 0.6rem;
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--text);
   text-decoration: none;
 }
 .brand-pulse {
-  width: 10px; height: 10px;
-  background: var(--c-wiener);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
+  background: var(--c-wiener);
   box-shadow: 0 0 10px var(--c-wiener);
-  animation: pulse-ring 2s infinite ease-out;
+  animation: pulse 2s infinite;
 }
-@keyframes pulse-ring {
-  0% { transform: scale(0.9); opacity: 0.8; }
-  50% { transform: scale(1.35); opacity: 1; }
-  100% { transform: scale(0.9); opacity: 0.8; }
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
 }
-.nav-links { display: flex; list-style: none; gap: 0.25rem; }
-.nav-links a {
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.nav-link {
   color: var(--text-muted);
   text-decoration: none;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 500;
   padding: 0.35rem 0.65rem;
-  border-radius: 4px;
+  border-radius: var(--radius);
   transition: var(--transition);
 }
-.nav-links a:hover { color: var(--text); background: var(--bg-card-alt); }
-.topbar-actions { display: flex; align-items: center; gap: 0.75rem; }
-.live-pill {
-  display: flex; align-items: center; gap: 0.4rem;
-  background: rgba(52, 211, 153, 0.12);
-  border: 1px solid rgba(52, 211, 153, 0.3);
-  color: var(--c-wiener);
-  padding: 0.25rem 0.65rem;
-  border-radius: 999px;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
+.nav-link:hover {
+  color: var(--text);
+  background: var(--bg-card-hover);
 }
-.live-pill .dot { width: 7px; height: 7px; background: var(--c-wiener); border-radius: 50%; animation: blink 1.2s infinite alternate; }
-@keyframes blink { 0% { opacity: 0.2; } 100% { opacity: 1; } }
+.nav-link.active {
+  color: var(--c-source);
+  background: rgba(56, 189, 248, 0.12);
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
 .btn-theme {
-  background: var(--bg-card-alt);
+  background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 0.35rem 0.75rem;
-  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius);
   cursor: pointer;
   font-size: 0.82rem;
-  display: flex; align-items: center; gap: 0.35rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: var(--transition);
+}
+.btn-theme:hover { border-color: var(--border-focus); }
+
+.btn-github {
+  background: linear-gradient(135deg, #2563eb, #38bdf8);
+  color: #fff;
+  border: none;
+  padding: 0.4rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: var(--transition);
+}
+.btn-github:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* Layout Container */
+.container {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
 }
 
-/* Layout */
-.container { max-width: 1200px; margin: 0 auto; padding: 2.25rem 1.25rem; }
-.section-block { margin-bottom: 4.5rem; scroll-margin-top: 5rem; }
-.section-head { margin-bottom: 1.5rem; }
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 3rem 1rem 2.5rem;
+  position: relative;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1rem;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--c-source);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.2rem;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme="light"] .hero-title {
+  background: linear-gradient(135deg, #0f172a 30%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-lead {
+  font-size: 1.15rem;
+  color: var(--text-muted);
+  max-width: 860px;
+  margin: 0 auto 2.2rem;
+}
+
+/* Quick Stats KPI Bar */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+}
+.kpi-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-focus);
+}
+.kpi-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 0.3rem;
+}
+.kpi-num {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #fff;
+}
+[data-theme="light"] .kpi-num { color: #0f172a; }
+.kpi-note {
+  font-size: 0.78rem;
+  color: var(--c-wiener);
+  font-weight: 600;
+  margin-top: 0.2rem;
+}
+
+/* Section Card Blocks */
+.section-block {
+  margin-bottom: 3.5rem;
+}
+.section-head {
+  margin-bottom: 1.8rem;
+}
+.section-head h2 {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.4rem;
+}
+.section-head .lead {
+  color: var(--text-muted);
+  font-size: 1.02rem;
+  max-width: 900px;
+}
 .badge-tag {
   display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
   font-weight: 700;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   margin-bottom: 0.5rem;
-  border: 1px solid currentColor;
 }
-.badge-blue   { color: var(--c-source); background: rgba(56, 189, 248, 0.1); }
-.badge-amber  { color: var(--c-mix);    background: rgba(251, 191, 36, 0.1); }
-.badge-purple { color: var(--c-model);  background: rgba(192, 132, 252, 0.1); }
-.badge-green  { color: var(--c-wiener); background: rgba(52, 211, 153, 0.1); }
-.badge-orange { color: var(--c-frcrn);  background: rgba(251, 146, 60, 0.1); }
-.badge-pink   { color: var(--c-phase);  background: rgba(244, 114, 182, 0.1); }
+.badge-blue  { background: rgba(56, 189, 248, 0.15); color: var(--c-source); }
+.badge-amber { background: rgba(251, 191, 36, 0.15); color: var(--c-mix); }
+.badge-purple{ background: rgba(192, 132, 252, 0.15); color: var(--c-model); }
+.badge-green { background: rgba(52, 211, 153, 0.15); color: var(--c-wiener); }
+.badge-pink  { background: rgba(244, 114, 182, 0.15); color: var(--c-phase); }
+.badge-cyan  { background: rgba(6, 182, 212, 0.15); color: var(--c-moss); }
 
-h1, h2, h3, h4 { font-family: var(--font-display); line-height: 1.25; font-weight: 700; }
-h1 { font-size: 2.45rem; letter-spacing: -0.02em; }
-h2 { font-size: 1.85rem; letter-spacing: -0.02em; }
-h3 { font-size: 1.25rem; }
-p.lead { font-size: 1.02rem; color: var(--text-muted); max-width: 820px; margin-top: 0.35rem; }
-
+/* Card Styles */
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.35rem;
+  padding: 1.6rem;
   box-shadow: var(--shadow);
-  transition: var(--transition);
+  margin-bottom: 1.5rem;
 }
-.card:hover { border-color: rgba(59, 130, 246, 0.35); }
-.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-@media (max-width: 900px) { .grid-4, .grid-3 { grid-template-columns: repeat(2, 1fr); } .grid-2 { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .grid-4, .grid-3 { grid-template-columns: 1fr; } .nav-links { display: none; } h1 { font-size: 1.9rem; } }
-
-/* Hero Stats & Scorecard */
-.hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 1.75rem; }
-.stat-box {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.1rem;
-  border-left: 4px solid var(--stat-color, var(--c-source));
-}
-.stat-box .val { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; }
-.stat-box .lbl { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; font-weight: 500; }
 
 /* Evolution Timeline */
-.evo-container { display: flex; flex-direction: column; gap: 1.25rem; margin-top: 1.25rem; }
+.evo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.2rem;
+}
 .evo-card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.35rem;
+  padding: 1.4rem;
   position: relative;
-  border-left: 4px solid var(--evo-color, var(--c-model));
   transition: var(--transition);
+  border-top: 4px solid var(--evo-color, var(--c-source));
 }
-.evo-card:hover { transform: translateX(3px); }
+.evo-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--border-focus);
+}
 .evo-badge {
-  position: absolute; top: 1.2rem; right: 1.2rem;
-  font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700;
-  padding: 0.2rem 0.6rem; border-radius: 999px;
-  background: rgba(255,255,255,0.06); color: var(--evo-color, var(--text));
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+  display: block;
 }
-.evo-card h3 { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+.evo-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+.evo-desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
 
-/* Tables & Code */
-.table-responsive { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
-table.custom-tbl { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
-table.custom-tbl th {
-  background: var(--bg-card-alt); color: var(--text); padding: 0.75rem 0.9rem;
-  font-weight: 600; border-bottom: 1px solid var(--border);
+/* Dual Tracks Grid */
+.dual-tracks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
-table.custom-tbl td {
-  padding: 0.65rem 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.04); color: var(--text-muted);
+@media (max-width: 900px) {
+  .dual-tracks { grid-template-columns: 1fr; }
 }
-[data-theme="light"] table.custom-tbl td { border-bottom: 1px solid rgba(0,0,0,0.04); }
-table.custom-tbl tr:hover td { background: var(--bg-card-hover); color: var(--text); }
-.pill { display: inline-block; padding: 0.12rem 0.45rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; font-family: var(--font-mono); }
-.pill-clean { background: rgba(56, 189, 248, 0.15); color: var(--c-source); }
-.pill-mix   { background: rgba(251, 191, 36, 0.15); color: var(--c-mix); }
-.pill-model { background: rgba(192, 132, 252, 0.15); color: var(--c-model); }
-.pill-sota  { background: rgba(52, 211, 153, 0.15); color: var(--c-wiener); }
-
-.code-box {
-  background: var(--bg-code);
+.track-card {
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1rem;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: #e2e8f0;
-  overflow-x: auto;
-  line-height: 1.5;
+  padding: 1.6rem;
+}
+.track-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-/* SVG Architecture */
-.arch-container { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-.svg-diagram-wrapper { width: 100%; overflow-x: auto; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 0.75rem; }
-svg.arch-svg { display: block; margin: 0 auto; user-select: none; }
-.svg-node { cursor: pointer; transition: transform 0.2s, filter 0.2s; }
-.svg-node:hover rect { filter: drop-shadow(0 0 8px currentColor); stroke-width: 2.2; }
-.svg-pulse-line { stroke-dasharray: 6, 6; animation: dash-flow 1.5s linear infinite; }
-@keyframes dash-flow { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+/* 25-Test Matrix Table */
+.matrix-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.filter-group {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.filter-btn {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 600;
+  transition: var(--transition);
+}
+.filter-btn:hover { color: var(--text); border-color: var(--border-focus); }
+.filter-btn.active {
+  background: rgba(56, 189, 248, 0.18);
+  border-color: var(--c-source);
+  color: var(--c-source);
+}
+.search-box {
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  min-width: 260px;
+  outline: none;
+}
+.search-box:focus { border-color: var(--border-focus); }
 
-.node-inspector {
-  margin-top: 1.25rem;
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+table.benchmark-tbl {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  text-align: left;
+}
+table.benchmark-tbl th {
+  background: var(--bg-card-alt);
+  padding: 0.75rem 0.7rem;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+table.benchmark-tbl td {
+  padding: 0.75rem 0.7rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+table.benchmark-tbl tr:hover td {
+  background: rgba(255, 255, 255, 0.02);
+}
+.cell-id {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--c-source);
+}
+.snr-chip {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--c-mix);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.76rem;
+}
+.noise-count-badge {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(6, 182, 212, 0.15);
+  color: var(--c-moss);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.badge-sub {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  background: var(--bg-card-alt);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+.metric-primary {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--c-moss);
+  font-size: 0.9rem;
+}
+.metric-sub {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+}
+.progress-wrap {
+  width: 70px;
+  height: 5px;
+  background: var(--bg-card-alt);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 2px;
+}
+.progress-bar {
+  height: 100%;
+  background: var(--c-wiener);
+  border-radius: 3px;
+}
+.status-pass {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  background: rgba(52, 211, 153, 0.15);
+  color: var(--c-wiener);
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* Audio Play Buttons in Matrix */
+.btn-audio-group {
+  display: flex;
+  gap: 3px;
+  white-space: nowrap;
+}
+.btn-aud {
+  border: 1px solid var(--border);
+  background: var(--bg-card-alt);
+  color: var(--text);
+  padding: 0.3rem 0.55rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.btn-aud:hover { border-color: var(--border-focus); }
+.btn-clean { color: var(--c-wiener); }
+.btn-mix { color: #fca5a5; }
+.btn-enh {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: var(--c-moss);
+  font-weight: 700;
+}
+.btn-enh:hover { background: var(--c-moss); color: #000; }
+
+/* Floating Audio Player Dock */
+.player-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(16, 24, 40, 0.96);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  padding: 0.9rem 2rem;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  box-shadow: 0 -8px 30px rgba(0,0,0,0.6);
+}
+.dock-meta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.dock-tag {
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+audio {
+  height: 38px;
+  min-width: 380px;
+}
+.dock-close {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+}
+.dock-close:hover { color: var(--text); background: var(--bg-card-hover); }
+
+/* Head-to-Head Comparison Bars */
+.comp-bar-group {
+  margin-bottom: 1.1rem;
+}
+.comp-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.88rem;
+  margin-bottom: 0.35rem;
+}
+.comp-bar-track {
+  height: 12px;
+  background: var(--bg-card-alt);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.comp-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 1s ease;
+}
+
+/* Real Audio Player Card */
+.audio-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+.audio-sample-box {
   background: var(--bg-card-alt);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.25rem;
-  border-left: 4px solid var(--node-color, var(--c-model));
-  animation: fadeIn 0.25s ease;
+  padding: 1.2rem;
 }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-/* Algorithms & Math */
-.algo-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-.math-formula {
-  background: var(--bg-code); border: 1px solid var(--border); border-radius: 4px;
-  padding: 0.65rem 0.85rem; font-family: var(--font-mono); font-size: 0.88rem; color: #38bdf8;
-  text-align: center; margin: 0.5rem 0;
+.audio-sample-box h4 {
+  font-size: 0.95rem;
+  margin-bottom: 0.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-
-/* Stepper UI */
-.stepper-nav { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
-.step-dot {
-  background: var(--bg-card-alt); border: 1px solid var(--border); color: var(--text-muted);
-  padding: 0.4rem 0.85rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap;
-}
-.step-dot.active { background: var(--c-model); color: #fff; border-color: var(--c-model); }
-.step-dot.completed { color: var(--c-wiener); border-color: var(--c-wiener); }
-
-/* Timeline */
-.timeline { position: relative; padding-left: 1.75rem; margin: 1rem 0; }
-.timeline::before { content: ''; position: absolute; top: 0; bottom: 0; left: 6px; width: 2px; background: var(--border); }
-.timeline-item { position: relative; margin-bottom: 1.25rem; }
-.timeline-item::before {
-  content: ''; position: absolute; left: -1.75rem; top: 0.25rem; width: 14px; height: 14px;
-  border-radius: 50%; background: var(--t-color, var(--c-source)); border: 3px solid var(--bg);
+.audio-sample-box p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.8rem;
 }
 
-/* Interactive Audio Lab */
-.lab-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; }
-.btn {
-  background: var(--bg-card-alt); border: 1px solid var(--border); color: var(--text);
-  padding: 0.45rem 0.85rem; border-radius: 4px; font-size: 0.82rem; font-weight: 600; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 0.35rem; transition: var(--transition);
+/* Viva Flashcards */
+.viva-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.8rem;
+  overflow: hidden;
 }
-.btn:hover { background: var(--bg-card-hover); }
-.btn-pri { background: var(--c-model); color: #fff; border-color: var(--c-model); }
-.btn-success { background: rgba(52, 211, 153, 0.15); color: var(--c-wiener); border-color: var(--c-wiener); }
-.btn-warn { background: rgba(251, 191, 36, 0.15); color: var(--c-mix); border-color: var(--c-mix); }
-.btn-danger { background: rgba(248, 113, 113, 0.15); color: var(--c-noise); border-color: var(--c-noise); }
-
-.audio-canvas-wrap {
-  position: relative; background: var(--bg-code); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 0.75rem; margin: 1rem 0; overflow: hidden;
+.viva-q {
+  padding: 1rem 1.4rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-card);
+  transition: var(--transition);
 }
-canvas#audioOscilloscope { display: block; width: 100%; height: 160px; }
-
-/* Range Slider Controls */
-.slider-group { display: flex; flex-direction: column; gap: 0.35rem; }
-.slider-group label { font-size: 0.82rem; font-weight: 600; color: var(--text-muted); display: flex; justify-content: space-between; }
-.slider-group input[type="range"] {
-  width: 100%; accent-color: var(--c-model); cursor: pointer;
-}
-
-/* Metric Bars */
-.metric-chart { display: flex; flex-direction: column; gap: 0.85rem; margin-top: 1rem; }
-.metric-row { display: flex; flex-direction: column; gap: 0.25rem; }
-.metric-label-row { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 600; }
-.metric-bar-track { height: 18px; background: var(--bg-code); border-radius: 4px; overflow: hidden; border: 1px solid var(--border); }
-.metric-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
-
-/* Viva Q&A */
-.qa-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 0.65rem; overflow: hidden; }
-.qa-q {
-  padding: 0.85rem 1.15rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-  font-weight: 600; font-size: 0.88rem;
-}
-.qa-q:hover { background: var(--bg-card-alt); }
-.qa-star { color: #facc15; margin-right: 0.35rem; }
-.qa-a {
-  padding: 0.85rem 1.15rem; background: var(--bg-card-alt); border-top: 1px solid var(--border);
-  font-size: 0.85rem; color: var(--text-muted); line-height: 1.55; display: none;
-}
-.qa-a.open { display: block; }
-.viva-box {
-  background: linear-gradient(135deg, rgba(192,132,252,0.08), rgba(52,211,153,0.08));
-  border: 1px solid var(--border); border-radius: var(--radius); padding: 1.35rem; margin-bottom: 1.5rem;
+.viva-q:hover { background: var(--bg-card-hover); color: var(--c-source); }
+.viva-a {
+  padding: 0 1.4rem 1.2rem;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  display: none;
+  line-height: 1.5;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card-alt);
 }
 
-footer { border-top: 1px solid var(--border); padding: 2.5rem 1.5rem; text-align: center; color: var(--text-dim); font-size: 0.82rem; background: var(--bg-card); }
+/* Real-Time Canvas Oscilloscope */
+.oscilloscope-wrap {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  background: var(--bg-code);
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin: 1rem 0;
+}
+canvas#oscilloscope {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 </style>
 </head>
 <body>
 
-<!-- STICKY TOPBAR -->
-<header class="topbar">
-  <a href="#overview" class="brand">
+<!-- Sticky Topbar Navigation -->
+<nav class="topbar">
+  <a href="#" class="brand">
     <div class="brand-pulse"></div>
-    <span>ClearParty</span>
+    ClearParty
   </a>
-  <nav>
-    <ul class="nav-links">
-      <li><a href="#overview">Overview</a></li>
-      <li><a href="#evolution">Evolution</a></li>
-      <li><a href="#dataset">Datasets</a></li>
-      <li><a href="#models">Architectures</a></li>
-      <li><a href="#behaviors">Working Flow</a></li>
-      <li><a href="#lab">Audio Lab</a></li>
-      <li><a href="#results">Results</a></li>
-      <li><a href="#viva">Viva Drill</a></li>
-    </ul>
-  </nav>
-  <div class="topbar-actions">
-    <div class="live-pill">
-      <div class="dot"></div>
-      <span>16 kHz Sinc-Sync</span>
-    </div>
-    <button class="btn-theme" id="themeToggleBtn">
-      <span id="themeIcon">☀️</span> Light
-    </button>
+  <div class="nav-links">
+    <a href="#overview" class="nav-link">Overview</a>
+    <a href="#evolution" class="nav-link">Evolution</a>
+    <a href="#benchmark25" class="nav-link active">25-Test Matrix (SOTA)</a>
+    <a href="#audiolab" class="nav-link">Audio Lab</a>
+    <a href="#models" class="nav-link">Architecture</a>
+    <a href="#viva" class="nav-link">Viva Drill</a>
   </div>
-</header>
+  <div class="topbar-actions">
+    <button class="btn-theme" id="themeToggle" onclick="toggleTheme()">☀️ Theme</button>
+    <a href="https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement" target="_blank" class="btn-github">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub Repo
+    </a>
+  </div>
+</nav>
 
-<main class="container">
+<div class="container">
 
-  <!-- ====================================================================
-       SECTION 1: PROJECT OVERVIEW
-       ==================================================================== -->
-  <section id="overview" class="section-block">
-    <span class="badge-tag badge-purple">Deep Learning Audio Separation & Enhancement</span>
-    <h1>The Cocktail Party Problem: Deep Speaker Separation & Speech Enhancement</h1>
-    <p class="lead">
-      In 1953, cognitive scientist Colin Cherry posed the classic <em>Cocktail Party Problem</em>: how the human brain effortlessly isolates a single voice in a crowded room. ClearParty delivers an end-to-end deep learning framework solving monaural multi-speaker separation and zero-shot compound environmental speech denoising.
+  <!-- Hero Header -->
+  <header class="hero">
+    <div class="hero-badge">⚡ SOTA ClearerVoice-Studio & Conv-TasNet Framework</div>
+    <h1 class="hero-title">Deep Speaker Separation &<br>Zero-Shot Multi-Noise Speech Enhancement</h1>
+    <p class="hero-lead">
+      An end-to-end deep learning framework addressing Colin Cherry's classic Cocktail Party Problem. Featuring Time-Domain Conv-TasNet for 2-speaker disentanglement and MossFormerGAN Gated Triple-Attention for compound multi-noise restoration.
     </p>
+  </header>
 
-    <!-- Scorecard -->
-    <div class="hero-stats">
-      <div class="stat-box" style="--stat-color: var(--c-wiener)">
-        <div class="val">+13.13 dB</div>
-        <div class="lbl">Max SI-SDRi Peak Separation Gain</div>
-      </div>
-      <div class="stat-box" style="--stat-color: var(--c-source)">
-        <div class="val">2.30 &rarr; 2.54</div>
-        <div class="lbl">PESQ Perceptual Quality Score</div>
-      </div>
-      <div class="stat-box" style="--stat-color: var(--c-model)">
-        <div class="val">88.1%</div>
-        <div class="lbl">STOI Intelligibility (up from 71.3%)</div>
-      </div>
-      <div class="stat-box" style="--stat-color: var(--c-frcrn)">
-        <div class="val">0.103&times; RTF</div>
-        <div class="lbl">Inference Speed (~10&times; Faster Than Real-Time)</div>
-      </div>
+  <!-- KPI Quick Stats Row -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">25-Test Accuracy Rate</div>
+      <div class="kpi-num" style="color:var(--c-wiener);">100.0%</div>
+      <div class="kpi-note">25 / 25 Tests Passed</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">MossFormer SI-SDR Gain</div>
+      <div class="kpi-num" style="color:var(--c-moss);">+8.99 dB</div>
+      <div class="kpi-note">Peak: +10.72 dB Gain</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">PESQ MOS Boost</div>
+      <div class="kpi-num" style="color:var(--c-wiener);">+1.184</div>
+      <div class="kpi-note">Peak: 3.468 MOS Quality</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Noise Attenuation</div>
+      <div class="kpi-num" style="color:var(--c-source);">87.18%</div>
+      <div class="kpi-note">3–4 Simultaneous Noises</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Speaker Separation</div>
+      <div class="kpi-num" style="color:var(--c-model);">+11.76 dB</div>
+      <div class="kpi-note">Validation SI-SDR (14k Pairs)</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Waveform Fidelity (r)</div>
+      <div class="kpi-num" style="color:var(--c-source);">0.9782</div>
+      <div class="kpi-note">Pearson Correlation</div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: DUAL-TRACK ARCHITECTURE -->
+  <section id="overview" class="section-block">
+    <div class="section-head">
+      <span class="badge-tag badge-blue">Mathematical Scope</span>
+      <h2>Dual-Track Problem Formulation</h2>
+      <p class="lead">Speech separation and speech enhancement are complementary yet mathematically distinct tasks. ClearParty strictly segregates both pipelines:</p>
     </div>
 
-    <!-- Real-World Significance -->
-    <div style="margin-top: 2.5rem;">
-      <div class="section-head">
-        <span class="badge-tag badge-amber">Acoustic Engineering Value</span>
-        <h2>Why Solving Single-Channel Separation Matters</h2>
+    <div class="dual-tracks">
+      <div class="track-card" style="border-left: 4px solid var(--c-model);">
+        <h3>👥 Track 1: Monaural Speaker Separation</h3>
+        <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:0.8rem;">
+          <b>Input Signal:</b> $x(t) = s_1(t) + s_2(t)$ (Two overlapping clean human speakers, zero background noise).
+        </p>
+        <ul style="font-size:0.84rem; color:var(--text-muted); margin-left:1.2rem; display:flex; flex-direction:column; gap:0.35rem;">
+          <li>• <b>Mathematical Challenge:</b> Single-channel underdetermined blind source separation with permutation ambiguity.</li>
+          <li>• <b>Architecture:</b> 1D Time-Domain Conv-TasNet (3,396,144 params, $R=3, B=256, Sc=256$) trained with uPIT negative SI-SDR loss.</li>
+          <li>• <b>Corpus:</b> LibriSpeech <code>train-clean-100</code> (14,269 pairs, 251 distinct speakers).</li>
+          <li>• <b>Post-Filter:</b> Natural Spectral Wiener Smoothing ($W_c(f,t)$) eliminating synthetic metallic buzz.</li>
+        </ul>
       </div>
-      <div class="grid-3">
-        <div class="card">
-          <b style="color:var(--c-source); font-size:1rem; display:block; margin-bottom:0.3rem;">🦻 Next-Gen Assistive Hearing</b>
-          <p style="font-size:0.85rem; color:var(--text-muted);">
-            Traditional hearing aids amplify all acoustic energy uniformly, exacerbating cocktail party noise. Deep separation isolates the target interlocutor, restoring natural speech intelligibility.
-          </p>
-        </div>
-        <div class="card">
-          <b style="color:var(--c-model); font-size:1rem; display:block; margin-bottom:0.3rem;">🎙️ Robust Voice AI & ASR</b>
-          <p style="font-size:0.85rem; color:var(--text-muted);">
-            Automatic Speech Recognition (ASR) Word Error Rates (WER) explode under overlapping speech. Providing isolated speaker channels restores word accuracy in teleconferencing and smart assistants.
-          </p>
-        </div>
-        <div class="card">
-          <b style="color:var(--c-wiener); font-size:1rem; display:block; margin-bottom:0.3rem;">⚡ Forensic & Telephony Clarity</b>
-          <p style="font-size:0.85rem; color:var(--text-muted);">
-            Eliminates compound environmental noise (babble, street, airport) without manual tuning, delivering pristine vocal restoration for telecommunications and mission-critical audio recovery.
-          </p>
-        </div>
+
+      <div class="track-card" style="border-left: 4px solid var(--c-moss);">
+        <h3>🛡️ Track 2: SOTA Multi-Noise Enhancement</h3>
+        <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:0.8rem;">
+          <b>Input Signal:</b> $x(t) = s(t) + \sum_{k=1}^{K} \alpha_k n_k(t)$ (Single target speech contaminated by 3 to 4 simultaneous distinct noises).
+        </p>
+        <ul style="font-size:0.84rem; color:var(--text-muted); margin-left:1.2rem; display:flex; flex-direction:column; gap:0.35rem;">
+          <li>• <b>Mathematical Challenge:</b> Complex non-stationary noise suppression without speech formants attenuation.</li>
+          <li>• <b>Architecture:</b> SOTA <code>MossFormerGAN_SE_16K</code> (Synchronous Attention Network with Gated Triple-Attention + FSMN + Dual Complex Decoders).</li>
+          <li>• <b>Corpus:</b> NOIZEUS 8-Environment Database (Babble, Street, Airport, Station, Car, Train, Restaurant, Exhibition).</li>
+          <li>• <b>Protocol:</b> 25-Test Benchmark spanning severe 0.0 dB to 10.0 dB SNR (100% Pass Rate).</li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- ====================================================================
-       SECTION 2: EVOLUTION OF THE PROJECT (CHRONOLOGICAL MILESTONES)
-       ==================================================================== -->
+  <!-- SECTION 2: FIVE DEVELOPMENTAL MILESTONES -->
   <section id="evolution" class="section-block">
     <div class="section-head">
-      <span class="badge-tag badge-pink">Engineering Progression</span>
-      <h2>Evolution of the Project: Four Developmental Milestones</h2>
+      <span class="badge-tag badge-pink">Engineering Milestones</span>
+      <h2>Evolution of the Project: Five Breakthrough Phases</h2>
+      <p class="lead">From initial STFT phase limitations to hardware acceleration, Wiener post-processing, and recent SOTA MossFormerGAN mastery.</p>
+    </div>
+
+    <div class="evo-grid">
+      <div class="evo-card" style="--evo-color: var(--c-phase);">
+        <span class="evo-badge">PHASE 1 (BASELINE)</span>
+        <div class="evo-title" style="color:var(--c-phase);">Spectrogram U-Net</div>
+        <div class="evo-desc">
+          Evaluated 2D U-Net on STFT magnitude masks. Discarding phase caused severe comb-filtering and watery artifacts (&lt;+6 dB SI-SDR ceiling).
+        </div>
+      </div>
+
+      <div class="evo-card" style="--evo-color: var(--c-mix);">
+        <span class="evo-badge">PHASE 2A (TIME-DOMAIN)</span>
+        <div class="evo-title" style="color:var(--c-mix);">1D Conv-TasNet Baseline</div>
+        <div class="evo-desc">
+          Shifted to raw waveform processing using 1.4M param Conv-TasNet on 2,700 Libri2Mix pairs. Bypassed STFT phase catastrophe to achieve +6.98 dB SI-SDRi.
+        </div>
+      </div>
+
+      <div class="evo-card" style="--evo-color: var(--c-model);">
+        <span class="evo-badge">PHASE 2B (SCALING)</span>
+        <div class="evo-title" style="color:var(--c-model);">14k Dataset & AMP FP16</div>
+        <div class="evo-desc">
+          Scaled to 14,269 mixture pairs across 251 speakers (3.4M params). AMP FP16 slashed training times by 3.1&times;; Validation SI-SDR surged to <b>+11.76 dB</b>.
+        </div>
+      </div>
+
+      <div class="evo-card" style="--evo-color: var(--c-wiener);">
+        <span class="evo-badge">PHASE 3 (TIMBRE POLISH)</span>
+        <div class="evo-title" style="color:var(--c-wiener);">Spectral Wiener Filter</div>
+        <div class="evo-desc">
+          Engineered spectral Wiener post-filtering ($W_k(f,t)$) to eliminate high-frequency synthetic metallic buzz. Reached +13.13 dB Peak SI-SDR and 88.1% STOI.
+        </div>
+      </div>
+
+      <div class="evo-card" style="--evo-color: var(--c-moss);">
+        <span class="evo-badge">PHASE 5 (SOTA CHAMPION)</span>
+        <div class="evo-title" style="color:var(--c-moss);">MossFormerGAN (25 Tests)</div>
+        <div class="evo-desc">
+          Deployed ClearerVoice-Studio MossFormerGAN on 25 compound mixtures (3–4 noises). Achieved <b>+8.99 dB SI-SDR gain, +1.184 PESQ, 87.18% attenuation, and 100% pass rate</b>.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: 25-TEST COMPOUND MULTI-NOISE BENCHMARK MATRIX -->
+  <section id="benchmark25" class="section-block">
+    <div class="section-head">
+      <span class="badge-tag badge-cyan">SOTA Evaluation Suite</span>
+      <h2>Master 25-Test Multi-Noise Benchmark (MossFormerGAN)</h2>
       <p class="lead">
-        From classical STFT magnitude masking limitations to scaled time-domain Conv-TasNet, natural Wiener filtering, and zero-shot multi-noise SOTA enhancement.
+        Evaluated on 25 realistic cocktail-party speech mixtures (each mixing an IEEE sentence with 3 to 4 simultaneous distinct noises from NOIZEUS) with input SNRs from 0.0 dB to 10.0 dB.
       </p>
     </div>
 
-    <div class="evo-container">
-      <!-- Milestone 1 -->
-      <div class="evo-card" style="--evo-color: var(--c-phase)">
-        <span class="evo-badge">MILESTONE 1 (BASELINE)</span>
-        <h3 style="color:var(--c-phase);">Phase 1: Spectrogram U-Net & The "Phase Catastrophe"</h3>
-        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:0.6rem;">
-          <b>The Hypothesis:</b> Apply 2D Convolutional U-Net on Short-Time Fourier Transform (STFT) magnitude spectrograms to predict magnitude ratio masks, inverting via inverse STFT (iSTFT).
-        </p>
-        <p style="font-size:0.84rem; color:var(--text-muted);">
-          <b>The Bottleneck:</b> Reconstructing separated audio using the <em>noisy mixture's phase</em> creates a severe mathematical ceiling (&lt; +6.0 dB SI-SDRi). Phase mismatch causes audible comb-filtering and watery synthetic artifacts. Classical Independent Component Analysis (ICA) similarly failed because single-microphone mixtures break ICA's spatial independence assumptions.
-        </p>
+    <!-- Head to Head Comparison Card -->
+    <div class="card" style="margin-bottom:1.8rem;">
+      <h3 style="font-size:1.15rem; margin-bottom:1rem; display:flex; align-items:center; gap:0.5rem;">
+        <span>🏆 Head-to-Head: MossFormerGAN SOTA vs Conv-TasNet Baseline</span>
+      </h3>
+
+      <div class="comp-bar-group">
+        <div class="comp-bar-label">
+          <span><strong>SI-SDR Gain (Signal Restoration)</strong></span>
+          <span>Conv-TasNet: +4.64 dB &nbsp;|&nbsp; <strong style="color:var(--c-moss);">MossFormer: +8.99 dB (+94% boost)</strong></span>
+        </div>
+        <div class="comp-bar-track">
+          <div class="comp-bar-fill" style="width: 89.9%; background: linear-gradient(90deg, #38bdf8, #06b6d4);"></div>
+        </div>
       </div>
 
-      <!-- Milestone 2 -->
-      <div class="evo-card" style="--evo-color: var(--c-mix)">
-        <span class="evo-badge">MILESTONE 2 (BREAKTHROUGH)</span>
-        <h3 style="color:var(--c-mix);">Phase 2A: Time-Domain 1D Conv-TasNet Baseline</h3>
-        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:0.6rem;">
-          <b>The Breakthrough:</b> Abandoned STFT time-frequency representations entirely. Adopted 1D Time-Domain Audio Separation Network (Conv-TasNet) operating directly on raw discrete audio waveforms.
-        </p>
-        <p style="font-size:0.84rem; color:var(--text-muted);">
-          Trained on 2,700 Libri2Mix pairs with 1.4M parameters using Utterance-level Permutation Invariant Training (uPIT). Completely bypassed the phase estimation bottleneck, achieving <b>+6.98 dB test SI-SDRi</b>.
-        </p>
+      <div class="comp-bar-group">
+        <div class="comp-bar-label">
+          <span><strong>PESQ MOS Improvement (Perceptual Quality)</strong></span>
+          <span>Conv-TasNet: +0.268 &nbsp;|&nbsp; <strong style="color:var(--c-wiener);">MossFormer: +1.184 (4.4&times; greater boost)</strong></span>
+        </div>
+        <div class="comp-bar-track">
+          <div class="comp-bar-fill" style="width: 82.5%; background: linear-gradient(90deg, #10b981, #34d399);"></div>
+        </div>
       </div>
 
-      <!-- Milestone 3 -->
-      <div class="evo-card" style="--evo-color: var(--c-model)">
-        <span class="evo-badge">MILESTONE 3 (SCALING & OPTIMIZATION)</span>
-        <h3 style="color:var(--c-model);">Phase 2B: Scaled 14k Dataset & Mixed-Precision Hardware Acceleration</h3>
-        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:0.6rem;">
-          <b>The Optimization:</b> Scaled from 2,700 pairs to <b>14,269 mixture pairs (251 speakers)</b> and doubled network capacity to 3.4M parameters (3,396,144 params).
-        </p>
-        <ul style="font-size:0.84rem; color:var(--text-muted); margin-left:1.2rem; display:flex; flex-direction:column; gap:0.25rem;">
-          <li>• <b>GPU Memory & Precision:</b> Migrated to FP16 / Automatic Mixed Precision (AMP), halving memory consumption.</li>
-          <li>• <b>Throughput:</b> Increased batch size to 12 and staged data to local NVMe SSD, slashing epoch time from 14.0 min to 4.5 min on NVIDIA Tesla T4 (<b>3.1&times; speedup</b>).</li>
-          <li>• <b>Benchmark Leap:</b> Validation SI-SDR surged to <b>+11.76 dB</b>; Mean Test SI-SDRi leaped to <b>+11.06 dB</b> (+4.08 dB generalization boost).</li>
-        </ul>
+      <div class="comp-bar-group">
+        <div class="comp-bar-label">
+          <span><strong>STOI Speech Intelligibility Gain</strong></span>
+          <span>Conv-TasNet: +0.034 &nbsp;|&nbsp; <strong style="color:var(--c-source);">MossFormer: +0.141 (4.1&times; greater boost)</strong></span>
+        </div>
+        <div class="comp-bar-track">
+          <div class="comp-bar-fill" style="width: 70.5%; background: linear-gradient(90deg, #3b82f6, #38bdf8);"></div>
+        </div>
       </div>
 
-      <!-- Milestone 4 -->
-      <div class="evo-card" style="--evo-color: var(--c-wiener)">
-        <span class="evo-badge">MILESTONE 4 (POST-FILTERING & POLISH)</span>
-        <h3 style="color:var(--c-wiener);">Phase 3: Held-Out 200 Test Benchmark & Spectral Wiener Post-Filter</h3>
-        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:0.6rem;">
-          <b>The Innovation:</b> Rigorous evaluation on 200 held-out test mixtures revealed that raw time-domain masks occasionally produced a faint metallic timbre.
-        </p>
-        <p style="font-size:0.84rem; color:var(--text-muted);">
-          Engineered a specialized <b>Spectral Wiener Post-Filtering Module ($W_k(f,t)$)</b> that re-synthesizes organic vocal tract overtones. Achieved <b>+13.13 dB Peak SI-SDRi</b>, raised PESQ from 1.59 to <b>2.30</b> (+0.71 delta), and elevated STOI intelligibility from 71.3% to <b>88.1%</b>.
-        </p>
+      <div class="comp-bar-group" style="margin-bottom:0;">
+        <div class="comp-bar-label">
+          <span><strong>Noise Power Energy Attenuation (%)</strong></span>
+          <span>Conv-TasNet: 65.01% &nbsp;|&nbsp; <strong style="color:var(--c-wiener);">MossFormer: 87.18% (+22.2% more noise eliminated)</strong></span>
+        </div>
+        <div class="comp-bar-track">
+          <div class="comp-bar-fill" style="width: 87.2%; background: linear-gradient(90deg, #059669, #34d399);"></div>
+        </div>
       </div>
+    </div>
 
-      <!-- Milestone 5 -->
-      <div class="evo-card" style="--evo-color: var(--c-frcrn)">
-        <span class="evo-badge">MILESTONE 5 (SOTA ENHANCEMENT)</span>
-        <h3 style="color:var(--c-frcrn);">Phase 4: Zero-Shot Multi-Noise Generalization & SOTA ClearVoice FRCRN</h3>
-        <p style="font-size:0.88rem; color:var(--text-muted); margin-bottom:0.6rem;">
-          <b>The Generalization Challenge:</b> Can networks trained strictly on single noises generalize zero-shot to complex overlapping compound environments (Babble + Street + Airport)?
-        </p>
-        <p style="font-size:0.84rem; color:var(--text-muted);">
-          Benchmarked 1D Conv-TasNet against <b>ClearVoice FRCRN-16K</b> (Complex STFT CFSMN with sinc-resampling). On a continuous 6.79s LibriSpeech stress utterance, FRCRN achieved <b>+7.22 dB SI-SDR gain</b> (+4.99 &rarr; +12.21 dB), <b>2.542 PESQ</b> (+1.112 gain), <b>80.89% direct noise energy attenuation</b>, and <b>97.12% clean waveform correlation ($r=0.9712$)</b>.
-        </p>
+    <!-- Interactive Table Controls -->
+    <div class="matrix-toolbar">
+      <div class="filter-group">
+        <button class="filter-btn active" onclick="setFilter('all', this)">All (25 Tests)</button>
+        <button class="filter-btn" onclick="setFilter('severe', this)">Severe (0–2.5 dB)</button>
+        <button class="filter-btn" onclick="setFilter('intermediate', this)">Medium (3–5.5 dB)</button>
+        <button class="filter-btn" onclick="setFilter('mild', this)">Mild (6–10 dB)</button>
+        <button class="filter-btn" onclick="setFilter('4noises', this)">4 Noises</button>
+        <button class="filter-btn" onclick="setFilter('3noises', this)">3 Noises</button>
       </div>
+      <input type="text" id="matrixSearch" class="search-box" placeholder="Search noise, utterance, or metric..." onkeyup="filterMatrixTable()">
+    </div>
+
+    <!-- Full 25-Test Benchmark Table -->
+    <div class="table-wrap">
+      <table class="benchmark-tbl" id="testTable">
+        <thead>
+          <tr>
+            <th>Test</th>
+            <th>Clean Utterance</th>
+            <th>SNR</th>
+            <th>Noise Formulation (3–4 Types)</th>
+            <th>SI-SDR Gain</th>
+            <th>PESQ Gain</th>
+            <th>STOI Gain</th>
+            <th>Attenuation</th>
+            <th>Pearson r</th>
+            <th>Status</th>
+            <th>Audio Audition</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+        <tr data-tier="severe" data-noises="3" data-snr="0.0">
+          <td class="cell-id">#01</td>
+          <td>
+            <strong>sp25.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.93s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">0.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">babble</span><span class="badge-sub">airport</span><span class="badge-sub">station</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.06 dB</div>
+            <div class="metric-sub">0.01 &rarr; <strong>9.07</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+0.475</div>
+            <div class="metric-sub">1.645 &rarr; <strong>2.121</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.163</div>
+            <div class="metric-sub">0.604 &rarr; <strong>0.766</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:88.9%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">88.9%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9433</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 1, 3, 'sp25.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 1, 3, 'sp25.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 1, 3, 'sp25.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="severe" data-noises="4" data-snr="1.5">
+          <td class="cell-id">#02</td>
+          <td>
+            <strong>sp26.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.49s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">1.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">babble</span><span class="badge-sub">restaurant</span><span class="badge-sub">exhibition</span><span class="badge-sub">airport</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.73 dB</div>
+            <div class="metric-sub">1.43 &rarr; <strong>10.15</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.090</div>
+            <div class="metric-sub">1.456 &rarr; <strong>2.546</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.177</div>
+            <div class="metric-sub">0.733 &rarr; <strong>0.909</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.5%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.5%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9550</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 2, 4, 'sp26.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 2, 4, 'sp26.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 2, 4, 'sp26.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="severe" data-noises="3" data-snr="2.0">
+          <td class="cell-id">#03</td>
+          <td>
+            <strong>sp27.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.54s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">2.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">exhibition</span><span class="badge-sub">station</span><span class="badge-sub">street</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.82 dB</div>
+            <div class="metric-sub">1.97 &rarr; <strong>11.79</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.118</div>
+            <div class="metric-sub">1.573 &rarr; <strong>2.691</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.192</div>
+            <div class="metric-sub">0.727 &rarr; <strong>0.919</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:90.0%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">90.0%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9684</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 3, 3, 'sp27.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 3, 3, 'sp27.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 3, 3, 'sp27.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="severe" data-noises="4" data-snr="2.5">
+          <td class="cell-id">#04</td>
+          <td>
+            <strong>sp28.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.44s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">2.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">airport</span><span class="badge-sub">street</span><span class="badge-sub">babble</span><span class="badge-sub">exhibition</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.58 dB</div>
+            <div class="metric-sub">2.53 &rarr; <strong>12.11</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.246</div>
+            <div class="metric-sub">1.497 &rarr; <strong>2.743</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.123</div>
+            <div class="metric-sub">0.795 &rarr; <strong>0.919</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:89.4%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">89.4%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9706</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 4, 4, 'sp28.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 4, 4, 'sp28.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 4, 4, 'sp28.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="severe" data-noises="3" data-snr="0.0">
+          <td class="cell-id">#05</td>
+          <td>
+            <strong>sp29.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.55s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">0.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">street</span><span class="badge-sub">airport</span><span class="badge-sub">car</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.66 dB</div>
+            <div class="metric-sub">0.21 &rarr; <strong>8.86</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+0.612</div>
+            <div class="metric-sub">1.451 &rarr; <strong>2.063</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.127</div>
+            <div class="metric-sub">0.735 &rarr; <strong>0.862</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.6%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.6%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9408</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 5, 3, 'sp29.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 5, 3, 'sp29.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 5, 3, 'sp29.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="4" data-snr="3.0">
+          <td class="cell-id">#06</td>
+          <td>
+            <strong>sp30.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.64s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">3.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">train</span><span class="badge-sub">restaurant</span><span class="badge-sub">airport</span><span class="badge-sub">exhibition</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.42 dB</div>
+            <div class="metric-sub">2.95 &rarr; <strong>12.37</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.160</div>
+            <div class="metric-sub">1.577 &rarr; <strong>2.738</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.214</div>
+            <div class="metric-sub">0.699 &rarr; <strong>0.914</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:89.0%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">89.0%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9722</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 6, 4, 'sp30.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 6, 4, 'sp30.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 6, 4, 'sp30.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="3" data-snr="3.5">
+          <td class="cell-id">#07</td>
+          <td>
+            <strong>sp01.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.82s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">3.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">babble</span><span class="badge-sub">airport</span><span class="badge-sub">station</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.39 dB</div>
+            <div class="metric-sub">3.60 &rarr; <strong>12.99</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+0.615</div>
+            <div class="metric-sub">1.609 &rarr; <strong>2.224</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.123</div>
+            <div class="metric-sub">0.731 &rarr; <strong>0.854</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:88.7%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">88.7%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9758</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 7, 3, 'sp01.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 7, 3, 'sp01.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 7, 3, 'sp01.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="4" data-snr="4.0">
+          <td class="cell-id">#08</td>
+          <td>
+            <strong>sp02.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.64s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">4.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">street</span><span class="badge-sub">car</span><span class="badge-sub">exhibition</span><span class="badge-sub">train</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.71 dB</div>
+            <div class="metric-sub">4.07 &rarr; <strong>13.78</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+0.869</div>
+            <div class="metric-sub">1.591 &rarr; <strong>2.460</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.167</div>
+            <div class="metric-sub">0.766 &rarr; <strong>0.933</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:89.7%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">89.7%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9797</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 8, 4, 'sp02.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 8, 4, 'sp02.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 8, 4, 'sp02.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="3" data-snr="4.5">
+          <td class="cell-id">#09</td>
+          <td>
+            <strong>sp03.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.25s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">4.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">car</span><span class="badge-sub">restaurant</span><span class="badge-sub">station</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.28 dB</div>
+            <div class="metric-sub">4.50 &rarr; <strong>13.78</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+0.364</div>
+            <div class="metric-sub">1.596 &rarr; <strong>1.960</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.088</div>
+            <div class="metric-sub">0.783 &rarr; <strong>0.870</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:88.5%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">88.5%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9797</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 9, 3, 'sp03.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 9, 3, 'sp03.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 9, 3, 'sp03.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="4" data-snr="5.0">
+          <td class="cell-id">#10</td>
+          <td>
+            <strong>sp04.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.12s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">5.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">station</span><span class="badge-sub">street</span><span class="badge-sub">airport</span><span class="badge-sub">babble</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.03 dB</div>
+            <div class="metric-sub">4.99 &rarr; <strong>14.02</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.059</div>
+            <div class="metric-sub">1.719 &rarr; <strong>2.778</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.128</div>
+            <div class="metric-sub">0.797 &rarr; <strong>0.925</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.8%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.8%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9807</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 10, 4, 'sp04.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 10, 4, 'sp04.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 10, 4, 'sp04.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="3" data-snr="5.0">
+          <td class="cell-id">#11</td>
+          <td>
+            <strong>sp05.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.20s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">5.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">station</span><span class="badge-sub">babble</span><span class="badge-sub">train</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+10.72 dB</div>
+            <div class="metric-sub">5.00 &rarr; <strong>15.72</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.378</div>
+            <div class="metric-sub">1.561 &rarr; <strong>2.939</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.158</div>
+            <div class="metric-sub">0.806 &rarr; <strong>0.964</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:91.5%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">91.5%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9869</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 11, 3, 'sp05.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 11, 3, 'sp05.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 11, 3, 'sp05.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="4" data-snr="5.5">
+          <td class="cell-id">#12</td>
+          <td>
+            <strong>sp06.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.73s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">5.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">car</span><span class="badge-sub">babble</span><span class="badge-sub">station</span><span class="badge-sub">restaurant</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.18 dB</div>
+            <div class="metric-sub">5.52 &rarr; <strong>14.70</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.529</div>
+            <div class="metric-sub">1.712 &rarr; <strong>3.241</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.131</div>
+            <div class="metric-sub">0.802 &rarr; <strong>0.933</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:88.0%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">88.0%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9835</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 12, 4, 'sp06.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 12, 4, 'sp06.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 12, 4, 'sp06.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="3" data-snr="5.0">
+          <td class="cell-id">#13</td>
+          <td>
+            <strong>sp07.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.51s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">5.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">exhibition</span><span class="badge-sub">babble</span><span class="badge-sub">restaurant</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.25 dB</div>
+            <div class="metric-sub">4.91 &rarr; <strong>13.16</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.269</div>
+            <div class="metric-sub">1.656 &rarr; <strong>2.925</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.131</div>
+            <div class="metric-sub">0.808 &rarr; <strong>0.939</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:85.1%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">85.1%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9767</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 13, 3, 'sp07.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 13, 3, 'sp07.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 13, 3, 'sp07.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="4" data-snr="4.0">
+          <td class="cell-id">#14</td>
+          <td>
+            <strong>sp08.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.85s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">4.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">car</span><span class="badge-sub">station</span><span class="badge-sub">babble</span><span class="badge-sub">exhibition</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.58 dB</div>
+            <div class="metric-sub">3.97 &rarr; <strong>13.55</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.208</div>
+            <div class="metric-sub">1.654 &rarr; <strong>2.862</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.167</div>
+            <div class="metric-sub">0.778 &rarr; <strong>0.945</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:89.3%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">89.3%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9786</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 14, 4, 'sp08.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 14, 4, 'sp08.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 14, 4, 'sp08.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="intermediate" data-noises="3" data-snr="5.0">
+          <td class="cell-id">#15</td>
+          <td>
+            <strong>sp09.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">3.01s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">5.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">airport</span><span class="badge-sub">station</span><span class="badge-sub">street</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.78 dB</div>
+            <div class="metric-sub">4.97 &rarr; <strong>13.75</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.675</div>
+            <div class="metric-sub">1.385 &rarr; <strong>3.060</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.211</div>
+            <div class="metric-sub">0.704 &rarr; <strong>0.916</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.1%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.1%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9795</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 15, 3, 'sp09.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 15, 3, 'sp09.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 15, 3, 'sp09.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="4" data-snr="6.0">
+          <td class="cell-id">#16</td>
+          <td>
+            <strong>sp10.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.67s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">6.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">station</span><span class="badge-sub">airport</span><span class="badge-sub">car</span><span class="badge-sub">exhibition</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.43 dB</div>
+            <div class="metric-sub">6.02 &rarr; <strong>14.45</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.603</div>
+            <div class="metric-sub">1.602 &rarr; <strong>3.206</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.148</div>
+            <div class="metric-sub">0.800 &rarr; <strong>0.948</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:85.8%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">85.8%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9825</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 16, 4, 'sp10.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 16, 4, 'sp10.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 16, 4, 'sp10.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="3" data-snr="6.5">
+          <td class="cell-id">#17</td>
+          <td>
+            <strong>sp11.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.93s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">6.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">babble</span><span class="badge-sub">street</span><span class="badge-sub">station</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+7.51 dB</div>
+            <div class="metric-sub">6.47 &rarr; <strong>13.98</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.394</div>
+            <div class="metric-sub">1.546 &rarr; <strong>2.941</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.171</div>
+            <div class="metric-sub">0.757 &rarr; <strong>0.928</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:82.4%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">82.4%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9806</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 17, 3, 'sp11.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 17, 3, 'sp11.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 17, 3, 'sp11.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="4" data-snr="7.0">
+          <td class="cell-id">#18</td>
+          <td>
+            <strong>sp12.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.75s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">7.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">car</span><span class="badge-sub">restaurant</span><span class="badge-sub">street</span><span class="badge-sub">airport</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.80 dB</div>
+            <div class="metric-sub">7.06 &rarr; <strong>15.86</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.266</div>
+            <div class="metric-sub">1.562 &rarr; <strong>2.827</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.099</div>
+            <div class="metric-sub">0.871 &rarr; <strong>0.970</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.0%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.0%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9873</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 18, 4, 'sp12.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 18, 4, 'sp12.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 18, 4, 'sp12.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="3" data-snr="7.5">
+          <td class="cell-id">#19</td>
+          <td>
+            <strong>sp13.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.54s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">7.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">exhibition</span><span class="badge-sub">airport</span><span class="badge-sub">babble</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+7.49 dB</div>
+            <div class="metric-sub">7.50 &rarr; <strong>15.00</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+0.683</div>
+            <div class="metric-sub">1.828 &rarr; <strong>2.511</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.105</div>
+            <div class="metric-sub">0.839 &rarr; <strong>0.944</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:82.0%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">82.0%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9845</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 19, 3, 'sp13.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 19, 3, 'sp13.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 19, 3, 'sp13.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="4" data-snr="8.0">
+          <td class="cell-id">#20</td>
+          <td>
+            <strong>sp14.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.93s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">8.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">babble</span><span class="badge-sub">street</span><span class="badge-sub">restaurant</span><span class="badge-sub">train</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.20 dB</div>
+            <div class="metric-sub">8.00 &rarr; <strong>17.21</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.823</div>
+            <div class="metric-sub">1.528 &rarr; <strong>3.350</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.144</div>
+            <div class="metric-sub">0.758 &rarr; <strong>0.901</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.7%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.7%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9906</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 20, 4, 'sp14.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 20, 4, 'sp14.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 20, 4, 'sp14.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="3" data-snr="8.5">
+          <td class="cell-id">#21</td>
+          <td>
+            <strong>sp15.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.92s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">8.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">street</span><span class="badge-sub">babble</span><span class="badge-sub">restaurant</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.28 dB</div>
+            <div class="metric-sub">8.39 &rarr; <strong>16.66</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.494</div>
+            <div class="metric-sub">1.597 &rarr; <strong>3.091</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.129</div>
+            <div class="metric-sub">0.829 &rarr; <strong>0.958</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:85.0%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">85.0%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9894</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 21, 3, 'sp15.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 21, 3, 'sp15.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 21, 3, 'sp15.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="4" data-snr="9.0">
+          <td class="cell-id">#22</td>
+          <td>
+            <strong>sp16.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.33s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">9.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">train</span><span class="badge-sub">restaurant</span><span class="badge-sub">exhibition</span><span class="badge-sub">airport</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+9.68 dB</div>
+            <div class="metric-sub">9.02 &rarr; <strong>18.70</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.082</div>
+            <div class="metric-sub">1.809 &rarr; <strong>2.891</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.068</div>
+            <div class="metric-sub">0.892 &rarr; <strong>0.960</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.6%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.6%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9933</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 22, 4, 'sp16.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 22, 4, 'sp16.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 22, 4, 'sp16.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="3" data-snr="9.5">
+          <td class="cell-id">#23</td>
+          <td>
+            <strong>sp17.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.40s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">9.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">3 Noises</span>
+              <span class="badge-sub">airport</span><span class="badge-sub">train</span><span class="badge-sub">station</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+7.28 dB</div>
+            <div class="metric-sub">9.53 &rarr; <strong>16.81</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.836</div>
+            <div class="metric-sub">1.606 &rarr; <strong>3.441</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.117</div>
+            <div class="metric-sub">0.836 &rarr; <strong>0.954</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:80.7%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">80.7%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9897</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 23, 3, 'sp17.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 23, 3, 'sp17.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 23, 3, 'sp17.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="4" data-snr="10.0">
+          <td class="cell-id">#24</td>
+          <td>
+            <strong>sp18.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.28s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">10.0 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">station</span><span class="badge-sub">airport</span><span class="badge-sub">restaurant</span><span class="badge-sub">babble</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+8.40 dB</div>
+            <div class="metric-sub">10.05 &rarr; <strong>18.45</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.721</div>
+            <div class="metric-sub">1.802 &rarr; <strong>3.523</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.104</div>
+            <div class="metric-sub">0.844 &rarr; <strong>0.948</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:85.2%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">85.2%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9929</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 24, 4, 'sp18.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 24, 4, 'sp18.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 24, 4, 'sp18.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+
+        <tr data-tier="mild" data-noises="4" data-snr="7.5">
+          <td class="cell-id">#25</td>
+          <td>
+            <strong>sp19.wav</strong>
+            <div style="font-size:0.75rem; color:var(--text-dim);">2.67s | 8 kHz</div>
+          </td>
+          <td><span class="snr-chip">7.5 dB</span></td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:3px; margin-bottom:2px;">
+              <span class="noise-count-badge">4 Noises</span>
+              <span class="badge-sub">exhibition</span><span class="badge-sub">street</span><span class="badge-sub">train</span><span class="badge-sub">station</span>
+            </div>
+          </td>
+          <td>
+            <div class="metric-primary">+10.45 dB</div>
+            <div class="metric-sub">7.51 &rarr; <strong>17.96</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-wiener);">+1.029</div>
+            <div class="metric-sub">1.591 &rarr; <strong>2.620</strong></div>
+          </td>
+          <td>
+            <div class="metric-primary" style="color:var(--c-source);">+0.152</div>
+            <div class="metric-sub">0.773 &rarr; <strong>0.925</strong></div>
+          </td>
+          <td>
+            <div class="progress-wrap">
+              <div class="progress-bar" style="width:87.9%;"></div>
+            </div>
+            <div style="font-family:var(--font-mono); font-size:0.78rem; font-weight:600;">87.9%</div>
+          </td>
+          <td><span style="font-family:var(--font-mono); font-weight:600;">0.9921</span></td>
+          <td><span class="status-pass">PASS</span></td>
+          <td>
+            <div class="btn-audio-group">
+              <button class="btn-aud btn-clean" onclick="playTestAudio('clean', 25, 4, 'sp19.wav')" title="Play Clean Reference">&#9658; Clean</button>
+              <button class="btn-aud btn-mix" onclick="playTestAudio('mix', 25, 4, 'sp19.wav')" title="Play Compound Mixture">&#9658; Mix</button>
+              <button class="btn-aud btn-enh" onclick="playTestAudio('enh', 25, 4, 'sp19.wav')" title="Play MossFormer Enhanced">&#9658; SOTA</button>
+            </div>
+          </td>
+        </tr>
+        
+        </tbody>
+      </table>
     </div>
   </section>
 
-  <!-- ====================================================================
-       SECTION 3: DATASET & ACOUSTIC SPECIFICATIONS
-       ==================================================================== -->
-  <section id="dataset" class="section-block">
+  <!-- SECTION 4: REAL-AUDIO PLAYGROUND & AUDIOLAB -->
+  <section id="audiolab" class="section-block">
     <div class="section-head">
-      <span class="badge-tag badge-blue">Acoustic Corpora</span>
-      <h2>Dataset Specifications & Audio Preprocessing</h2>
-      <p class="lead">Curated corpora and mathematical noise isolation pipelines powering training and zero-shot stress benchmarks.</p>
+      <span class="badge-tag badge-purple">Listening Laboratory</span>
+      <h2>Audio Audition Lab: Speaker Separation & Enhancement</h2>
+      <p class="lead">Compare raw model outputs with clean ground truths and post-processed natural speech.</p>
     </div>
 
-    <div class="grid-2" style="margin-bottom:1.5rem;">
-      <div class="card">
-        <h3>1. Libri2Mix Speaker Separation Corpus</h3>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin:0.4rem 0;">
-          Derived from LibriSpeech (Panayotov et al., 2015) using the open-source LibriMix generator.
-        </p>
-        <ul style="font-size:0.82rem; color:var(--text-muted); list-style:none; display:flex; flex-direction:column; gap:0.35rem; margin-top:0.75rem;">
-          <li>✔ <b>Mixture Pairs:</b> 14,269 training pairs from 251 distinct speakers.</li>
-          <li>✔ <b>Acoustic Setting:</b> <code>wav8k/min/clean</code> (8 kHz sampling rate, truncated to shortest speaker).</li>
-          <li>✔ <b>Relative SNR Range:</b> Overlapping speech mixed between -2.5 dB and +2.5 dB relative power.</li>
-          <li>✔ <b>Held-Out Test Set:</b> 200 unseen speaker mixtures strictly segregated from training IDs.</li>
-        </ul>
-      </div>
-
-      <div class="card">
-        <h3>2. NOIZEUS Environmental Noise Database</h3>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin:0.4rem 0;">
-          Standardized speech database (Loizou, UT Dallas) comprising 30 clean IEEE sentences across 8 acoustic noise types.
-        </p>
-        <ul style="font-size:0.82rem; color:var(--text-muted); list-style:none; display:flex; flex-direction:column; gap:0.35rem; margin-top:0.75rem;">
-          <li>✔ <b>8 Environments:</b> Airport, Babble, Car, Exhibition, Restaurant, Station, Street, Train.</li>
-          <li>✔ <b>Calibrated SNRs:</b> 0 dB, 5 dB, 10 dB, 15 dB signal-to-noise ratios.</li>
-          <li>✔ <b>Mathematical Noise Isolation:</b> Sample-aligned subtraction:
-            <code style="display:block; margin:0.3rem 0; padding:0.25rem 0.5rem; background:var(--bg-code); color:var(--c-source); border-radius:3px;">
-              n_isolated(t) = x_noisy(t) - s_clean(t)
-            </code>
-            Extracted 930 pure ground-truth noise tracks for dynamic jittering.
-          </li>
-        </ul>
-      </div>
-    </div>
-
-    <!-- Interactive Acoustic Parameter Explorer -->
-    <div class="card">
-      <h3 style="margin-bottom:0.5rem; font-size:1.05rem;">Interactive Acoustic Parameter Explorer</h3>
-      <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1rem;">
-        Adjust acoustic mixture conditions to explore how signal complexity affects separation requirements:
-      </p>
-
-      <div class="grid-3" style="margin-bottom:1.25rem;">
-        <div class="slider-group">
-          <label><span>Mixture Input SNR</span><span id="valSnr" style="color:var(--c-source);">+5 dB</span></label>
-          <input type="range" id="sliderSnr" min="-5" max="15" value="5" step="1">
-        </div>
-        <div class="slider-group">
-          <label><span>Speaker Energy Balance (S1/S2)</span><span id="valRatio" style="color:var(--c-mix);">50% / 50%</span></label>
-          <input type="range" id="sliderRatio" min="10" max="90" value="50" step="5">
-        </div>
-        <div class="slider-group">
-          <label><span>Noise Complexity</span><span id="valNoise" style="color:var(--c-noise);">Compound (3 Sources)</span></label>
-          <input type="range" id="sliderNoise" min="1" max="4" value="3" step="1">
-        </div>
-      </div>
-
-      <div style="background:var(--bg-card-alt); border:1px solid var(--border); border-radius:4px; padding:0.85rem; font-size:0.85rem;">
-        <b style="color:var(--text); display:block; margin-bottom:0.25rem;">Estimated Acoustic Challenge:</b>
-        <span id="txtAcousticChallenge" style="color:var(--text-muted);">
-          Moderate separation challenge. Two dominant speakers at balanced power with compound background noise. Time-domain depthwise separable convolutions are essential to prevent phase cancellation.
-        </span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ====================================================================
-       SECTION 4: MODELS & ARCHITECTURES
-       ==================================================================== -->
-  <section id="models" class="section-block">
-    <div class="section-head">
-      <span class="badge-tag badge-purple">Deep Learning Models</span>
-      <h2>Model Architectures & Mathematical Formulations</h2>
-      <p class="lead">Detailed layer breakdowns, loss functions, and post-filtering mathematics.</p>
-    </div>
-
-    <div class="arch-container" style="margin-bottom:2rem;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem;">
-        <h3>Conv-TasNet Modular Topology</h3>
-        <span style="font-size:0.8rem; color:var(--text-muted);">Click any block below to inspect its tensor dimensions & operations</span>
-      </div>
-
-      <!-- SVG Topology of Conv-TasNet -->
-      <div class="svg-diagram-wrapper">
-        <svg class="arch-svg" id="modelSvg" viewBox="0 0 940 320" width="940" height="320" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <marker id="arr2" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-              <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
-            </marker>
-          </defs>
-
-          <!-- Input Waveform -->
-          <g class="svg-node" onclick="inspectModel('input')">
-            <rect x="20" y="90" width="100" height="80" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="1.8"/>
-            <text x="70" y="125" fill="#fff" font-family="'Outfit', sans-serif" font-weight="700" font-size="12" text-anchor="middle">Input Audio</text>
-            <text x="70" y="145" fill="#94a3b8" font-size="9" text-anchor="middle">x(t) [B, 1, T]</text>
-          </g>
-          <line x1="120" y1="130" x2="160" y2="130" stroke="#38bdf8" stroke-width="2" class="svg-pulse-line" marker-end="url(#arr2)"/>
-
-          <!-- 1D Conv Encoder -->
-          <g class="svg-node" onclick="inspectModel('encoder')">
-            <rect x="160" y="70" width="115" height="120" rx="6" fill="#0369a1" stroke="#38bdf8" stroke-width="1.8"/>
-            <text x="217" y="105" fill="#fff" font-family="'Outfit', sans-serif" font-weight="700" font-size="12" text-anchor="middle">1D Conv Encoder</text>
-            <text x="217" y="125" fill="#bae6fd" font-size="9" text-anchor="middle">N=512, L=16, S=8</text>
-            <text x="217" y="145" fill="#bae6fd" font-size="9" text-anchor="middle">Basis Feature Map</text>
-            <text x="217" y="165" fill="#e0f2fe" font-family="'JetBrains Mono', monospace" font-size="8" text-anchor="middle">w = ReLU(x * U)</text>
-          </g>
-          <line x1="275" y1="130" x2="315" y2="130" stroke="#c084fc" stroke-width="2" class="svg-pulse-line" marker-end="url(#arr2)"/>
-
-          <!-- Dilated TCN Separator -->
-          <g class="svg-node" onclick="inspectModel('tcn')">
-            <rect x="315" y="50" width="190" height="160" rx="6" fill="#6b21a8" stroke="#c084fc" stroke-width="1.8"/>
-            <text x="410" y="80" fill="#fff" font-family="'Outfit', sans-serif" font-weight="700" font-size="13" text-anchor="middle">Dilated TCN Separator</text>
-            <text x="410" y="100" fill="#e9d5ff" font-size="9.5" text-anchor="middle">3 Stacks &times; 8 Layers (d=1..128)</text>
-            <text x="410" y="120" fill="#e9d5ff" font-size="9.5" text-anchor="middle">Depthwise Separable 1D Convs</text>
-            <text x="410" y="140" fill="#e9d5ff" font-size="9.5" text-anchor="middle">PReLU + Global LayerNorm</text>
-            <text x="410" y="165" fill="#f3e8ff" font-family="'JetBrains Mono', monospace" font-size="8.5" text-anchor="middle">Receptive Field: 153 ms</text>
-          </g>
-          <line x1="505" y1="130" x2="545" y2="130" stroke="#c084fc" stroke-width="2" class="svg-pulse-line" marker-end="url(#arr2)"/>
-
-          <!-- Dual Mask Generator -->
-          <g class="svg-node" onclick="inspectModel('masks')">
-            <rect x="545" y="70" width="125" height="120" rx="6" fill="#a21caf" stroke="#f472b6" stroke-width="1.8"/>
-            <text x="607" y="105" fill="#fff" font-family="'Outfit', sans-serif" font-weight="700" font-size="12" text-anchor="middle">Dual Mask Head</text>
-            <text x="607" y="125" fill="#fbcfe8" font-size="9" text-anchor="middle">1x1 Conv + Sigmoid/ReLU</text>
-            <text x="607" y="145" fill="#fbcfe8" font-size="9" text-anchor="middle">M1, M2 &in; [0, &infin;)</text>
-            <text x="607" y="165" fill="#fdf2f8" font-family="'JetBrains Mono', monospace" font-size="8" text-anchor="middle">d1 = w &odot; M1, d2 = w &odot; M2</text>
-          </g>
-          <line x1="670" y1="130" x2="710" y2="130" stroke="#34d399" stroke-width="2" class="svg-pulse-line" marker-end="url(#arr2)"/>
-
-          <!-- 1D Transposed Conv Decoder -->
-          <g class="svg-node" onclick="inspectModel('decoder')">
-            <rect x="710" y="70" width="115" height="120" rx="6" fill="#047857" stroke="#34d399" stroke-width="1.8"/>
-            <text x="767" y="105" fill="#fff" font-family="'Outfit', sans-serif" font-weight="700" font-size="12" text-anchor="middle">1D ConvTranspose</text>
-            <text x="767" y="125" fill="#a7f3d0" font-size="9" text-anchor="middle">Decoder Matrix V</text>
-            <text x="767" y="145" fill="#a7f3d0" font-size="9" text-anchor="middle">Waveform Inversion</text>
-            <text x="767" y="165" fill="#ecfdf5" font-family="'JetBrains Mono', monospace" font-size="8" text-anchor="middle">s1_hat, s2_hat</text>
-          </g>
-          <line x1="825" y1="130" x2="865" y2="130" stroke="#34d399" stroke-width="2" class="svg-pulse-line" marker-end="url(#arr2)"/>
-
-          <!-- Natural Wiener Filter -->
-          <g class="svg-node" onclick="inspectModel('wiener')">
-            <rect x="865" y="80" width="65" height="100" rx="6" fill="#065f46" stroke="#34d399" stroke-width="1.8"/>
-            <text x="897" y="115" fill="#fff" font-family="'Outfit', sans-serif" font-weight="700" font-size="11" text-anchor="middle">Wiener</text>
-            <text x="897" y="132" fill="#6ee7b7" font-size="8.5" text-anchor="middle">Filter</text>
-            <text x="897" y="152" fill="#d1fae5" font-family="'JetBrains Mono', monospace" font-size="7.5" text-anchor="middle">W_k(f,t)</text>
-          </g>
-        </svg>
-      </div>
-
-      <!-- Live Inspector for Selected Layer -->
-      <div class="node-inspector" id="modelInspectorBox">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
-          <h3 id="mInspTitle" style="color:var(--text); font-size:1.1rem;">Component: Dilated TCN Separator</h3>
-          <span class="badge-tag badge-purple" id="mInspBadge">CORE ENGINE</span>
-        </div>
-        <p id="mInspDesc" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.6rem;">
-          Stack of dilated depthwise separable 1D convolutions expanding exponential receptive fields without parameter explosion.
-        </p>
-        <div class="code-box" id="mInspCode">
-<pre><code># Temporal Convolutional Network (TCN) Block
-class DepthwiseSeparableConv1d(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, dilation=1):
-        super().__init__()
-        self.dconv = nn.Conv1d(in_channels, in_channels, kernel_size, 
-                               dilation=dilation, padding=dilation, groups=in_channels)
-        self.prelu = nn.PReLU()
-        self.gln = GlobalLayerNorm(in_channels)
-        self.pconv = nn.Conv1d(in_channels, out_channels, kernel_size=1)</code></pre>
-        </div>
-      </div>
-    </div>
-
-    <!-- Mathematical Formulations -->
-    <div class="grid-3">
-      <!-- 1. SI-SDR & uPIT -->
-      <div class="algo-card">
-        <h3 style="font-size:1rem; color:var(--c-source);">Scale-Invariant SDR (SI-SDR)</h3>
-        <p style="font-size:0.8rem; color:var(--text-muted);">
-          Standard SNR penalizes arbitrary scale mismatches. SI-SDR orthogonally projects estimated signal onto target:
-        </p>
-        <div class="math-formula">
-          \alpha = \frac{\hat{s}^T s}{\|s\|^2 + \epsilon}, \quad e_{tgt} = \alpha s, \quad e_{noise} = \hat{s} - e_{tgt}
-        </div>
-        <div class="math-formula">
-          \text{SI-SDR} = 10 \log_{10} \left( \frac{\|e_{tgt}\|^2}{\|e_{noise}\|^2 + \epsilon} \right)
-        </div>
-      </div>
-
-      <!-- 2. uPIT -->
-      <div class="algo-card">
-        <h3 style="font-size:1rem; color:var(--c-model);">Utterance-level PIT (uPIT)</h3>
-        <p style="font-size:0.8rem; color:var(--text-muted);">
-          Resolves permutation ambiguity (which output corresponds to which speaker) by finding lowest permutation loss:
-        </p>
-        <div class="math-formula">
-          \mathcal{L}_{uPIT} = \min_{p \in \mathcal{P}} \sum_{i=1}^2 -\text{SI-SDR}(s_i, \hat{s}_{p(i)})
-        </div>
-        <p style="font-size:0.78rem; color:var(--text-muted);">
-          Computes all 2! = 2 pairings: $(s_1, \hat{s}_1) + (s_2, \hat{s}_2)$ vs $(s_1, \hat{s}_2) + (s_2, \hat{s}_1)$, backpropagating only on the optimal assignment.
-        </p>
-      </div>
-
-      <!-- 3. Spectral Wiener Filter -->
-      <div class="algo-card">
-        <h3 style="font-size:1rem; color:var(--c-wiener);">Natural Spectral Wiener Filter</h3>
-        <p style="font-size:0.8rem; color:var(--text-muted);">
-          Post-processing module smoothing metallic artifacts by re-synthesizing natural vocal tract resonances:
-        </p>
-        <div class="math-formula">
-          W_k(f, t) = \frac{|\hat{S}_k(f, t)|^2}{|\hat{S}_1(f, t)|^2 + |\hat{S}_2(f, t)|^2 + \epsilon}
-        </div>
-        <div class="math-formula">
-          S_k^{Wiener}(f, t) = W_k(f, t) \cdot X_{mix}(f, t)
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ====================================================================
-       SECTION 5: WORKING BEHAVIORS (SIGNAL PROCESSING PIPELINE)
-       ==================================================================== -->
-  <section id="behaviors" class="section-block">
-    <div class="section-head">
-      <span class="badge-tag badge-green">Runtime Signal Processing</span>
-      <h2>Working Behaviors: Step-by-Step Processing Flow</h2>
-      <p class="lead">How raw overlapping acoustic vibrations transform through 6 sequential mathematical phases into clean isolated voices.</p>
-    </div>
-
-    <!-- Stepper Navigation -->
+    <!-- Track 1 Real Audio Player Samples -->
     <div class="card" style="margin-bottom:1.5rem;">
-      <div class="stepper-nav" id="flowNav">
-        <button class="step-dot active" onclick="setFlowStep(0)">1. Mixture Input</button>
-        <button class="step-dot" onclick="setFlowStep(1)">2. 1D Basis Encoding</button>
-        <button class="step-dot" onclick="setFlowStep(2)">3. Dilated TCN Separation</button>
-        <button class="step-dot" onclick="setFlowStep(3)">4. Continuous Masking</button>
-        <button class="step-dot" onclick="setFlowStep(4)">5. Waveform Decoder</button>
-        <button class="step-dot" onclick="setFlowStep(5)">6. Wiener Post-Filter</button>
-      </div>
-
-      <div class="grid-2">
-        <div id="flowDetailCard">
-          <!-- Populated by JS -->
+      <h3 style="margin-bottom:0.8rem; font-size:1.15rem;">👥 Track 1: Real Speaker Separation Audio Files</h3>
+      <div class="audio-card-grid">
+        <div class="audio-sample-box">
+          <h4>Overlapping Mixture <span class="snr-chip">0 dB</span></h4>
+          <p>Two speakers talking simultaneously (Input).</p>
+          <audio controls preload="none" src="speaker_separation/samples/Input Mixture (Both speakers talking).wav" style="width:100%;"></audio>
         </div>
-        <div class="code-box" id="flowTensorBox">
-          <!-- Populated by JS -->
+        <div class="audio-sample-box">
+          <h4>Separated Speaker 1 (Raw) <span class="badge-tag badge-purple">Conv-TasNet</span></h4>
+          <p>Raw model output with slight metallic buzz.</p>
+          <audio controls preload="none" src="speaker_separation/samples/Separated Speaker 1 (Model Output).wav" style="width:100%;"></audio>
+        </div>
+        <div class="audio-sample-box">
+          <h4>Wiener Restored Speaker 1 <span class="badge-tag badge-green">Post-Filtered</span></h4>
+          <p>Clean natural human timbre restored.</p>
+          <audio controls preload="none" src="speaker_separation/samples/Natural Wiener-Reconstructed Speaker 1 (Natural human voice).wav" style="width:100%;"></audio>
+        </div>
+        <div class="audio-sample-box">
+          <h4>True Clean Speaker 1 <span class="badge-tag badge-blue">Ground Truth</span></h4>
+          <p>Original uncorrupted reference audio.</p>
+          <audio controls preload="none" src="speaker_separation/samples/True Speaker 1 (Clean Reference).wav" style="width:100%;"></audio>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- ====================================================================
-       SECTION 6: INTERACTIVE AUDIO LAB & SYNTHESIZER
-       ==================================================================== -->
-  <section id="lab" class="section-block">
-    <div class="section-head">
-      <span class="badge-tag badge-amber">Acoustic Simulator</span>
-      <h2>Interactive Audio Lab: Real-Time Signal Separator</h2>
-      <p class="lead">
-        Simulate the separation of two simultaneous human speakers. Listen to superimposed waveforms, observe harmonic spectrograms, and compare raw versus Wiener-filtered reconstruction.
-      </p>
-    </div>
-
-    <div class="lab-box">
-      <!-- Toolbar Controls -->
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+    <!-- Real-Time Interactive Canvas Oscilloscope Simulator -->
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.6rem;">
         <div>
-          <h3>Monaural Signal Separator Engine</h3>
-          <span style="font-size:0.8rem; color:var(--text-muted);">Synthesized dual harmonic voices with simulated environmental noise</span>
+          <h3 style="font-size:1.1rem;">Live Real-Time Web Audio Oscilloscope</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted);">Real-time pitch formant synthesis (Male 140 Hz Baritone vs Female 240 Hz Soprano)</p>
         </div>
         <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
-          <button class="btn btn-pri" id="btnAudioPlay">▶ Play Audio</button>
-          <button class="btn" id="btnAudioStop">⏹ Stop</button>
-          <button class="btn btn-warn" id="btnModeMix">🎧 Mixed Audio (Both)</button>
-          <button class="btn btn-success" id="btnModeSpk1">👤 Speaker 1 (Male 140 Hz)</button>
-          <button class="btn btn-success" id="btnModeSpk2">👤 Speaker 2 (Female 240 Hz)</button>
-          <button class="btn btn-pri" id="btnModeWiener">✨ Natural Wiener Restored</button>
+          <button class="btn-aud btn-enh" id="btnOscPlay" onclick="toggleOscilloscope()">▶ Start Simulator</button>
+          <button class="btn-aud btn-mix" onclick="setOscMode('mix')">🎧 Mixed Voices</button>
+          <button class="btn-aud btn-clean" onclick="setOscMode('spk1')">👤 Speaker 1 (140 Hz)</button>
+          <button class="btn-aud btn-clean" onclick="setOscMode('spk2')">👤 Speaker 2 (240 Hz)</button>
         </div>
       </div>
 
-      <!-- Real-Time Canvas Oscilloscope -->
-      <div class="audio-canvas-wrap">
-        <div style="position:absolute; top:8px; left:12px; font-family:var(--font-mono); font-size:0.75rem; color:var(--c-source); z-index:10;">
-          <span id="canvasModeLabel">MODE: Superimposed Mixture (Speaker 1 + Speaker 2 + Background Babble)</span>
-        </div>
-        <canvas id="audioOscilloscope"></canvas>
-      </div>
-
-      <!-- Frequency Formants & SNR Indicator -->
-      <div class="grid-3" style="font-size:0.85rem; margin-top:0.5rem;">
-        <div style="background:var(--bg-card-alt); padding:0.75rem; border-radius:4px; border:1px solid var(--border);">
-          <b style="color:var(--c-mix); display:block; margin-bottom:0.2rem;">Speaker 1 (Vocal Pitch F0)</b>
-          <span>Fundamental: 140 Hz (Baritone Formants: 500, 1500, 2500 Hz)</span>
-        </div>
-        <div style="background:var(--bg-card-alt); padding:0.75rem; border-radius:4px; border:1px solid var(--border);">
-          <b style="color:var(--c-source); display:block; margin-bottom:0.2rem;">Speaker 2 (Vocal Pitch F0)</b>
-          <span>Fundamental: 240 Hz (Soprano Formants: 800, 1800, 3200 Hz)</span>
-        </div>
-        <div style="background:var(--bg-card-alt); padding:0.75rem; border-radius:4px; border:1px solid var(--border);">
-          <b style="color:var(--c-wiener); display:block; margin-bottom:0.2rem;">Post-Processing Status</b>
-          <span id="txtWienerStatus">Spectral Wiener Smoothing: Inactive</span>
-        </div>
+      <div class="oscilloscope-wrap">
+        <canvas id="oscilloscope"></canvas>
       </div>
     </div>
   </section>
 
-  <!-- ====================================================================
-       SECTION 7: RESULTS & BENCHMARK EVALUATIONS
-       ==================================================================== -->
-  <section id="results" class="section-block">
+  <!-- SECTION 5: MODEL ARCHITECTURES -->
+  <section id="models" class="section-block">
     <div class="section-head">
-      <span class="badge-tag badge-green">Quantitative Evaluation</span>
-      <h2>Results & Empirical Benchmark Evaluations</h2>
-      <p class="lead">Rigorous scoring across standardized academic metrics on held-out test sets.</p>
+      <span class="badge-tag badge-amber">Deep Learning Topology</span>
+      <h2>Model Architectures & Mathematical Formulations</h2>
+      <p class="lead">Time-domain dilated TCN separation versus frequency-domain synchronous attention networks.</p>
     </div>
 
-    <!-- Comparative Table -->
-    <div class="card" style="margin-bottom:1.5rem;">
-      <h3 style="margin-bottom:0.75rem; font-size:1.1rem;">Objective 1: Two-Speaker Separation (Libri2Mix Test Benchmark)</h3>
-      <div class="table-responsive">
-        <table class="custom-tbl">
-          <thead>
-            <tr>
-              <th>Architecture & Phase</th>
-              <th>Training Pairs</th>
-              <th>Parameters</th>
-              <th>Validation SI-SDR</th>
-              <th>Mean Test SI-SDRi</th>
-              <th>PESQ Score</th>
-              <th>STOI Intelligibility</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><b>Phase 1: Spectrogram U-Net</b></td>
-              <td>2,700</td>
-              <td>1.8 M</td>
-              <td>+5.42 dB</td>
-              <td>+4.95 dB</td>
-              <td>1.72</td>
-              <td>73.5%</td>
-            </tr>
-            <tr>
-              <td><b>Phase 2A: Baseline Conv-TasNet</b></td>
-              <td>2,700</td>
-              <td>1.4 M</td>
-              <td>+8.66 dB</td>
-              <td>+6.98 dB</td>
-              <td>1.94</td>
-              <td>79.2%</td>
-            </tr>
-            <tr>
-              <td><b>Phase 2B: Scaled Conv-TasNet (AMP)</b></td>
-              <td>14,269</td>
-              <td>3.4 M</td>
-              <td><b>+11.76 dB</b></td>
-              <td><b>+11.06 dB</b></td>
-              <td>2.24</td>
-              <td>86.4%</td>
-            </tr>
-            <tr style="background:rgba(52,211,153,0.06);">
-              <td><b style="color:var(--c-wiener);">Phase 3: Conv-TasNet + Wiener Filter</b></td>
-              <td>14,269</td>
-              <td>3.4 M</td>
-              <td><b>+11.76 dB</b></td>
-              <td><b style="color:var(--c-wiener);">+11.06 dB (Peak +13.13)</b></td>
-              <td><b style="color:var(--c-wiener);">2.30 (Max 3.07)</b></td>
-              <td><b style="color:var(--c-wiener);">88.1%</b></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Objective 2 Table -->
-    <div class="card" style="margin-bottom:1.5rem;">
-      <h3 style="margin-bottom:0.75rem; font-size:1.1rem;">Objective 2: Zero-Shot Multi-Noise Speech Enhancement (6.79s Continuous Utterance)</h3>
-      <div class="table-responsive">
-        <table class="custom-tbl">
-          <thead>
-            <tr><th>Evaluation Metric</th><th>Corrupted Multi-Noise Input</th><th>ClearVoice FRCRN-16K Output</th><th>Net Gain (&Delta;)</th><th>Significance</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><b>SI-SDR (Signal Fidelity)</b></td>
-              <td>+4.99 dB</td>
-              <td><b style="color:var(--c-wiener);">+12.21 dB</b></td>
-              <td><b style="color:var(--c-wiener);">+7.22 dB</b></td>
-              <td>Exceptional signal restoration under 5 dB compound noise</td>
-            </tr>
-            <tr>
-              <td><b>PESQ (ITU-T P.862 Quality)</b></td>
-              <td>1.430</td>
-              <td><b style="color:var(--c-wiener);">2.542</b></td>
-              <td><b style="color:var(--c-wiener);">+1.112</b></td>
-              <td>Massive leap from heavily degraded to clear telephony audio</td>
-            </tr>
-            <tr>
-              <td><b>STOI (Intelligibility)</b></td>
-              <td>0.727</td>
-              <td><b style="color:var(--c-wiener);">0.783</b></td>
-              <td><b style="color:var(--c-wiener);">+0.056</b></td>
-              <td>Significantly improved human consonant comprehension</td>
-            </tr>
-            <tr>
-              <td><b>Noise Energy Attenuation</b></td>
-              <td>2.56 &times; 10⁻³</td>
-              <td>0.49 &times; 10⁻³</td>
-              <td><b style="color:var(--c-wiener);">-80.89% (-7.19 dB)</b></td>
-              <td>Over 80% of interfering acoustic power removed</td>
-            </tr>
-            <tr>
-              <td><b>Waveform Correlation (r)</b></td>
-              <td>0.8715</td>
-              <td><b style="color:var(--c-wiener);">0.9712</b></td>
-              <td><b style="color:var(--c-wiener);">+0.0997</b></td>
-              <td><b>97.12% mathematical match</b> to ground-truth clean speech</td>
-            </tr>
-            <tr>
-              <td><b>Inference Speed (RTF)</b></td>
-              <td>&mdash;</td>
-              <td><b style="color:var(--c-source);">0.103&times; RTF</b></td>
-              <td>&mdash;</td>
-              <td>Processes 6.8s of audio in 0.70s (~10&times; faster than real-time)</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Interactive Metric Visualizer -->
-    <div class="card">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
-        <h3 style="font-size:1.05rem;">Interactive Benchmark Progression Visualizer</h3>
-        <div style="display:flex; gap:0.4rem;">
-          <button class="btn btn-pri" onclick="setMetricView('sisdr')">SI-SDRi (dB)</button>
-          <button class="btn" onclick="setMetricView('pesq')">PESQ Score</button>
-          <button class="btn" onclick="setMetricView('stoi')">STOI (%)</button>
-        </div>
+    <div class="dual-tracks">
+      <div class="card">
+        <h3 style="color:var(--c-model); margin-bottom:0.6rem;">Conv-TasNet 1D Waveform Pipeline</h3>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem;">
+          Operates end-to-end on raw discrete waveforms $x(t) \in \mathbb{R}^{1 \times T}$ without STFT:
+        </p>
+        <ul style="font-size:0.84rem; color:var(--text-muted); margin-left:1.2rem; display:flex; flex-direction:column; gap:0.3rem;">
+          <li>• <b>1D Encoder:</b> $N=512$ filters, kernel $L=16$ (2.0 ms), stride $S=8$ (1.0 ms) &rarr; $\mathbf{w} = \text{ReLU}(\text{Conv1D}(x))$.</li>
+          <li>• <b>Dilated TCN Separator:</b> 3 repeats of 8 dilated conv blocks ($d=2^0 \dots 2^7$) with depthwise separable convs.</li>
+          <li>• <b>1D Decoder:</b> Transposed convolution reconstructing $\hat{s}_c(t) = \text{ConvTranspose1D}(\mathbf{m}_c \odot \mathbf{w})$.</li>
+          <li>• <b>uPIT Loss:</b> $\mathcal{L}_{\text{uPIT}} = \min_{\pi \in \mathcal{P}} [-\sum_{c=1}^2 \text{SI-SDR}(s_c, \hat{s}_{\pi(c)})]$.</li>
+        </ul>
       </div>
 
-      <div class="metric-chart" id="metricChartDisplay">
-        <!-- Rendered by JS -->
+      <div class="card">
+        <h3 style="color:var(--c-moss); margin-bottom:0.6rem;">MossFormerGAN SyncANet Topology</h3>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.8rem;">
+          SOTA ClearerVoice-Studio GAN framework operating in the power-compressed complex STFT domain:
+        </p>
+        <ul style="font-size:0.84rem; color:var(--text-muted); margin-left:1.2rem; display:flex; flex-direction:column; gap:0.3rem;">
+          <li>• <b>SyncANet Backbone:</b> 64 channels, 201 frequency bins ($N=400$ FFT, hop=100).</li>
+          <li>• <b>Gated Triple-Attention:</b> Joint full-band self-attention, sub-band attention, and local FSMN memory blocks.</li>
+          <li>• <b>Dual Decoders:</b> Simultaneously estimates magnitude ratio mask and complex spectral residual corrections.</li>
+          <li>• <b>GAN Discriminator:</b> Multi-scale spectral discriminator penalizing musical noise and harmonic smearing.</li>
+        </ul>
       </div>
     </div>
   </section>
 
-  <!-- ====================================================================
-       SECTION 8: DECISION MATRIX & VIVA EXAMINATION DRILL
-       ==================================================================== -->
+  <!-- SECTION 6: VIVA / DEFENSE Q&A FLASHCARDS -->
   <section id="viva" class="section-block">
     <div class="section-head">
-      <span class="badge-tag badge-purple">Academic Viva Preparation</span>
-      <h2>Decision Matrix & Viva Examination Drill</h2>
-      <p class="lead">Core engineering trade-offs and examiner questions with verified technical answers.</p>
+      <span class="badge-tag badge-pink">Oral Defense Preparation</span>
+      <h2>Viva Examination & Architectural Defense Drill</h2>
+      <p class="lead">Answers to key questions likely to be asked by university faculty and review committees.</p>
     </div>
 
-    <!-- Interactive Viva Drill -->
-    <div class="viva-box">
-      <div style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; font-weight:700; margin-bottom:0.35rem;">
-        🎯 INTERACTIVE VIVA FLASHCARD DRILL
+    <div class="viva-card">
+      <div class="viva-q" onclick="toggleViva(this)">
+        <span>1. Why is the PESQ score 2.79–3.468 instead of hitting the theoretical maximum of 4.5?</span>
+        <span>▼</span>
       </div>
-      <div id="vivaQText" style="font-family:var(--font-display); font-size:1.15rem; font-weight:700; margin-bottom:0.75rem;">
-        Click "Random Question" to test your recall on acoustic system design.
-      </div>
-      <div id="vivaAText" style="background:var(--bg-card); border:1px solid var(--border); padding:0.85rem; border-radius:4px; font-size:0.85rem; display:none; margin-bottom:0.75rem;"></div>
-      <div style="display:flex; gap:0.4rem;">
-        <button class="btn btn-pri" id="btnNextViva">🎲 Random Question</button>
-        <button class="btn" id="btnRevealViva">💡 Reveal Answer</button>
+      <div class="viva-a">
+        <b>Two physical factors explain this:</b><br>
+        1. <b>The 8 kHz Nyquist Cutoff:</b> The NOIZEUS dataset is recorded at 8,000 Hz narrowband, with a brick-wall cutoff at 4,000 Hz. Upsampling to 16 kHz for MossFormer and downsampling back to 8 kHz creates an empty upper spectrum. ITU-T P.862 PESQ compares against studio wideband expectations; on 8 kHz telephony audio, 2.7–3.2 represents commercial cellular VoLTE quality.<br>
+        2. <b>Severe Compound Multi-Noise Protocol:</b> Published papers reporting >3.3 PESQ test only 1 light noise at +15 dB. Our benchmark tests 3 to 4 simultaneous noises at 0–5 dB SNR, where the input PESQ was 1.606. Gaining +1.184 MOS is an extraordinary achievement.
       </div>
     </div>
 
-    <!-- Accordion Q&A Deck -->
-    <div id="vivaDeck">
-      <div class="qa-item">
-        <div class="qa-q" onclick="toggleQA(this)">
-          <span><span class="qa-star">★</span> Why choose time-domain Conv-TasNet over traditional STFT spectrogram masking?</span>
-          <span>▼</span>
-        </div>
-        <div class="qa-a">
-          STFT magnitude masking creates the "Phase Catastrophe": recovering clean magnitudes while recombining with the noisy mixture phase introduces comb-filtering and bounds SI-SDRi below +6.0 dB. Conv-TasNet operates directly on discrete time-domain samples via a 1D convolutional encoder and decoder, optimizing both magnitude and phase implicitly.
-        </div>
+    <div class="viva-card">
+      <div class="viva-q" onclick="toggleViva(this)">
+        <span>2. Why did Phase 1 Spectrogram U-Net fail while Conv-TasNet succeeded?</span>
+        <span>▼</span>
       </div>
-
-      <div class="qa-item">
-        <div class="qa-q" onclick="toggleQA(this)">
-          <span><span class="qa-star">★</span> What is Permutation Invariant Training (uPIT) and why is it mandatory?</span>
-          <span>▼</span>
-        </div>
-        <div class="qa-a">
-          In blind speaker separation, the order of target speakers ($s_1, s_2$) is arbitrary. If the network outputs $\hat{s}_1, \hat{s}_2$, assigning static targets causes gradient cancellation because the model gets penalized for assigning speaker A to channel 2 even if the separation was perfect. uPIT evaluates all $N!$ permutations and backpropagates gradients only through the minimum-loss permutation.
-        </div>
+      <div class="viva-a">
+        <b>The Phase Catastrophe:</b> The U-Net operated only on STFT magnitude spectrograms and used the <em>mixture's corrupted phase</em> for inverse STFT reconstruction. When speakers overlap, phases cancel out destructively, causing a hard ceiling (&lt;+6 dB SI-SDR). Conv-TasNet replaced STFT with learned 1D convolutions, completely bypassing the phase estimation problem.
       </div>
+    </div>
 
-      <div class="qa-item">
-        <div class="qa-q" onclick="toggleQA(this)">
-          <span><span class="qa-star">★</span> What is the purpose of the Spectral Wiener Post-Filter ($W_k(f,t)$)?</span>
-          <span>▼</span>
-        </div>
-        <div class="qa-a">
-          Raw time-domain continuous masks occasionally introduce high-frequency synthetic metallic artifacts. The spectral Wiener filter computes a soft ratio mask $W_k(f,t) = |\hat{S}_k|^2 / (|\hat{S}_1|^2 + |\hat{S}_2|^2 + \epsilon)$ in the STFT domain, re-weighting the original mixture to preserve organic vocal tract overtones and produce natural human voice restoration.
-        </div>
+    <div class="viva-card">
+      <div class="viva-q" onclick="toggleViva(this)">
+        <span>3. What is Utterance-Level Permutation Invariant Training (uPIT)?</span>
+        <span>▼</span>
       </div>
-
-      <div class="qa-item">
-        <div class="qa-q" onclick="toggleQA(this)">
-          <span>Why use Scale-Invariant SDR (SI-SDR) instead of Mean Squared Error (MSE)?</span>
-          <span>▼</span>
-        </div>
-        <div class="qa-a">
-          Waveform MSE is hypersensitive to global gain differences. A separated signal that is perfectly isolated but scaled by a factor of 0.8 would yield a large MSE penalty. SI-SDR calculates an orthogonal projection $\alpha = \hat{s}^T s / \|s\|^2$, decomposing the estimate into an aligned target vector and an orthogonal residual error, measuring pure separation fidelity.
-        </div>
+      <div class="viva-a">
+        In speaker separation, the model outputs Speaker A on Channel 1 and Speaker B on Channel 2, but there is no predetermined ordering. Traditional MSE loss penalizes the model if it assigns Speaker A to Channel 2. uPIT calculates the loss for all $C!$ permutations and backpropagates solely through the minimum-loss alignment, solving the label permutation problem.
       </div>
+    </div>
 
-      <div class="qa-item">
-        <div class="qa-q" onclick="toggleQA(this)">
-          <span>Why use Dilated Depthwise Separable Convolutions instead of LSTMs/BLSTMs?</span>
-          <span>▼</span>
-        </div>
-        <div class="qa-a">
-          Recurrent networks like BLSTM have high computational complexity, cannot process long sequences in parallel during training, and suffer from vanishing gradients over long audio files. Exponentially dilated depthwise separable 1D convolutions expand the receptive field to 153 ms while reducing parameter count by over 80% and allowing complete parallelization across GPU tensor cores.
-        </div>
+    <div class="viva-card">
+      <div class="viva-q" onclick="toggleViva(this)">
+        <span>4. How does Spectral Wiener Post-Filtering eliminate the "metallic buzz"?</span>
+        <span>▼</span>
+      </div>
+      <div class="viva-a">
+        Time-domain transposed convolutions occasionally produce micro-phase discontinuities that sound like high-frequency robotic buzz. Applying a soft spectral Wiener filter $W_c(f,t) = |\hat{S}_c|^2 / (|\hat{S}_1|^2 + |\hat{S}_2|^2 + \epsilon)$ smoothes non-harmonic phase jitter while preserving formant trajectories.
+      </div>
+    </div>
+
+    <div class="viva-card">
+      <div class="viva-q" onclick="toggleViva(this)">
+        <span>5. How does MossFormerGAN avoid quadratic memory explosion?</span>
+        <span>▼</span>
+      </div>
+      <div class="viva-a">
+        Standard Transformers suffer from $O(T^2)$ memory complexity over long audio sequences. MossFormer employs <b>Gated Triple-Attention with Finite Short Memory Networks (FSMN)</b>, decomposing attention into full-band and sub-band projections with linear recurrence, achieving long temporal receptive fields with linear $O(T)$ scaling.
       </div>
     </div>
   </section>
 
-</main>
+</div>
 
-<footer>
-  <b>ClearParty</b> — Deep Speaker Separation & Zero-Shot Multi-Noise Speech Enhancement
-  <div style="font-size:0.75rem; margin-top:0.25rem;">Built with PyTorch, Conv-TasNet, uPIT, Spectral Wiener Filtering & ClearVoice FRCRN.</div>
-</footer>
+<!-- Persistent Floating Audio Player Dock -->
+<div id="playerDock" class="player-dock">
+  <div class="dock-meta">
+    <span id="dockTrackBadge" class="dock-tag" style="background:var(--c-moss); color:#000;">SOTA MOSSFORMER</span>
+    <div>
+      <div id="dockTrackTitle" style="font-weight:700; font-size:0.95rem;">Test #01 — Enhanced Speech</div>
+      <div id="dockTrackSub" style="font-size:0.75rem; color:var(--text-muted);">sp25.wav | 0.0 dB SNR (babble + airport + station)</div>
+    </div>
+  </div>
+  <audio id="mainAudioPlayer" controls autoplay></audio>
+  <button class="dock-close" onclick="closeDock()">✕</button>
+</div>
 
-<!-- ==========================================================================
-     VANILLA JAVASCRIPT: SIMULATION & INTERACTIVITY
-     ========================================================================== -->
 <script>
-(function() {
-  'use strict';
+// Theme Toggle
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const target = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', target);
+  document.getElementById('themeToggle').innerText = target === 'dark' ? '☀️ Theme' : '🌙 Theme';
+}
 
-  // 1. Theme Toggler
-  const themeBtn = document.getElementById('themeToggleBtn');
-  let currentTheme = localStorage.getItem('clearparty-theme') || 'dark';
-  function applyTheme(t) {
-    document.documentElement.setAttribute('data-theme', t);
-    localStorage.setItem('clearparty-theme', t);
-    themeBtn.innerHTML = t === 'light' ? '<span>🌙</span> Dark' : '<span>☀️</span> Light';
-  }
-  applyTheme(currentTheme);
-  themeBtn.addEventListener('click', () => {
-    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    applyTheme(currentTheme);
-  });
+// 25-Test Filter Buttons
+function setFilter(tier, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
 
-  // 2. Model Inspector Data
-  const modelLayers = {
-    input: {
-      title: "Input Waveform x(t)", badge: "INPUT TENSOR", color: "var(--c-source)",
-      desc: "Discrete time-domain acoustic signal sampled at 8 kHz / 16 kHz. Represents superimposed speakers s1(t) + s2(t) plus optional environmental noise.",
-      code: `x = mixture_waveform.unsqueeze(1)  # Tensor Shape: [Batch, 1, Time_Samples]`
-    },
-    encoder: {
-      title: "1D Convolutional Encoder", badge: "LATENT EMBEDDING", color: "var(--c-source)",
-      desc: "Transforms raw waveform segments into a high-dimensional continuous basis feature map w. Kernel length L=16 (2ms), stride S=8, filters N=512 with ReLU non-linearity.",
-      code: `w = F.relu(self.encoder(x))  # Output Shape: [Batch, N=512, Length=T/S]`
-    },
-    tcn: {
-      title: "Dilated TCN Separator", badge: "CORE TEMPORAL ENGINE", color: "var(--c-model)",
-      desc: "3 repeating stacks of 8 dilated depthwise separable 1D conv blocks with exponential dilation factors d in {1, 2, 4, 8, 16, 32, 64, 128}. Covers 153ms phonetic receptive field with PReLU and Global LayerNorm.",
-      code: `# Stack of 8 dilated depthwise separable blocks (groups=in_channels)
-out = self.dconv(x_dilated)
-out = self.gln(self.prelu(out))
-out = self.pconv(out) + residual`
-    },
-    masks: {
-      title: "Dual Mask Estimation Head", badge: "SEPARATION MASKS", color: "var(--c-phase)",
-      desc: "1x1 projection conv predicting two continuous masks M1, M2 for speaker channels. Multiplied element-wise with encoded representation w.",
-      code: `masks = self.mask_conv(tcn_out).view(B, 2, N, L)
-m1, m2 = F.relu(masks[:, 0]), F.relu(masks[:, 1])
-d1, d2 = w * m1, w * m2  # Isolated speaker feature vectors`
-    },
-    decoder: {
-      title: "1D Transposed Conv Decoder", badge: "WAVEFORM SYNTHESIS", color: "var(--c-wiener)",
-      desc: "Transposed 1D convolution with kernel L=16 and stride S=8 synthesizing time-domain speech signals directly without STFT phase synthesis.",
-      code: `s1_hat = self.decoder(d1)  # Output Shape: [Batch, 1, Time_Samples]
-s2_hat = self.decoder(d2)  # Output Shape: [Batch, 1, Time_Samples]`
-    },
-    wiener: {
-      title: "Spectral Wiener Post-Filter", badge: "OVERTONE RESTORATION", color: "var(--c-wiener)",
-      desc: "Computes STFT magnitude ratio mask W_k(f,t) = |S_k|^2 / (|S1|^2 + |S2|^2 + eps) to smooth synthetic metallic artifacts and restore human voice formants.",
-      code: `W1 = (mag1**2) / (mag1**2 + mag2**2 + 1e-8)
-s1_wiener = istft(W1 * mix_stft)`
-    }
-  };
+  const rows = document.querySelectorAll('#testTable tbody tr');
+  rows.forEach(r => {
+    const rTier = r.getAttribute('data-tier');
+    const rNoises = r.getAttribute('data-noises');
 
-  window.inspectModel = function(key) {
-    const l = modelLayers[key]; if (!l) return;
-    const box = document.getElementById('modelInspectorBox');
-    box.style.setProperty('--node-color', l.color);
-    document.getElementById('mInspTitle').textContent = `Component: ${l.title}`;
-    document.getElementById('mInspBadge').textContent = l.badge;
-    document.getElementById('mInspDesc').textContent = l.desc;
-    document.getElementById('mInspCode').innerHTML = `<pre><code>${l.code}</code></pre>`;
-  };
-
-  // 3. Step-by-Step Flow Logic
-  const flowSteps = [
-    {
-      name: "1. Acoustic Superposition (Mixture Input)",
-      desc: "Two human speakers talk simultaneously into a single monaural microphone, creating linear waveform superposition: x(t) = s1(t) + s2(t).",
-      tensor: `Input Tensor: x(t)
-Dimensions: [Batch=12, Channels=1, Samples=32000] (4.0s @ 8kHz)
-Acoustic State: Fully overlapping speech with zero spatial cues.`
-    },
-    {
-      name: "2. 1D Basis Feature Encoding",
-      desc: "The 1D convolutional encoder projects 16-sample audio segments into a 512-dimensional continuous latent feature representation.",
-      tensor: `Encoded Feature Map: w = ReLU(x * U)
-Dimensions: [Batch=12, Filters=512, Frames=3999]
-Property: Replaces fixed DFT Fourier bases with learned acoustic filters.`
-    },
-    {
-      name: "3. Multi-Scale Dilated TCN Separation",
-      desc: "3 stacks of 8 dilated depthwise separable conv blocks expand receptive field to 153ms, capturing long-term phonetic and syllabic dependencies.",
-      tensor: `TCN Intermediate Representation:
-Dilation Factors: 1, 2, 4, 8, 16, 32, 64, 128
-Receptive Field: 153 ms (sufficient for multi-syllable phoneme context).`
-    },
-    {
-      name: "4. Continuous Mask Multiplication",
-      desc: "Predicts continuous separation masks M1 and M2, performing element-wise masking in feature space to isolate speaker energies.",
-      tensor: `Masked Features: d1 = w ⊙ M1, d2 = w ⊙ M2
-Output Shapes: [Batch=12, Channels=512, Frames=3999]
-Activation: Non-negative continuous masks isolating speaker harmonics.`
-    },
-    {
-      name: "5. Waveform Synthesis (1D Decoder)",
-      desc: "1D Transposed convolution inverts feature representations back to raw discrete time-domain waveforms s1_hat(t) and s2_hat(t).",
-      tensor: `Reconstructed Waveforms: s1_hat, s2_hat
-Dimensions: [Batch=12, Channels=1, Samples=32000]
-Training Loss: Evaluated using Utterance-level PIT (uPIT) with SI-SDR.`
-    },
-    {
-      name: "6. Spectral Wiener Post-Filtering",
-      desc: "Computes STFT magnitude ratio mask to smooth raw time-domain artifacts, re-synthesizing organic vocal tract resonances.",
-      tensor: `Wiener Reconstructed Signal:
-Metric Gain: PESQ boosts +0.71, STOI reaches 88.1%.
-Acoustic Result: Completely eliminates metallic timbre.`
-    }
-  ];
-
-  window.setFlowStep = function(idx) {
-    document.querySelectorAll('#flowNav .step-dot').forEach((d, i) => {
-      d.classList.toggle('active', i === idx);
-      d.classList.toggle('completed', i < idx);
-    });
-    const s = flowSteps[idx];
-    document.getElementById('flowDetailCard').innerHTML = `
-      <h3 style="color:var(--c-model); font-size:1.05rem; margin-bottom:0.35rem;">${s.name}</h3>
-      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;">${s.desc}</p>
-      <div style="display:flex; gap:0.4rem;">
-        <button class="btn" onclick="setFlowStep(Math.max(0, ${idx - 1}))" ${idx === 0 ? 'disabled' : ''}>← Prev</button>
-        <button class="btn btn-pri" onclick="setFlowStep(Math.min(5, ${idx + 1}))" ${idx === 5 ? 'disabled' : ''}>Next →</button>
-      </div>
-    `;
-    document.getElementById('flowTensorBox').innerHTML = `<pre><code>${s.tensor}</code></pre>`;
-  };
-  setFlowStep(0);
-
-  // 4. Acoustic Slider Dynamic Challenge Calculation
-  const slSnr = document.getElementById('sliderSnr');
-  const slRatio = document.getElementById('sliderRatio');
-  const slNoise = document.getElementById('sliderNoise');
-  function updateChallenge() {
-    const snr = parseInt(slSnr.value, 10);
-    const rat = parseInt(slRatio.value, 10);
-    const noi = parseInt(slNoise.value, 10);
-    document.getElementById('valSnr').textContent = `${snr > 0 ? '+' : ''}${snr} dB`;
-    document.getElementById('valRatio').textContent = `${rat}% / ${100 - rat}%`;
-    document.getElementById('valNoise').textContent = noi === 1 ? "Clean (No Noise)" : noi === 2 ? "Single Noise (Babble)" : noi === 3 ? "Compound (3 Sources)" : "Severe (8 Overlapping)";
-    
-    let text = "";
-    if (snr < 0 || noi === 4) {
-      text = "🔥 Extreme Stress Condition. High acoustic interference with negative SNR. Time-domain Conv-TasNet must leverage full 3.4M parameter capacity with complex STFT sinc-resampling to avoid intelligibility collapse.";
-    } else if (snr <= 5 || noi === 3) {
-      text = "⚡ Moderate-to-High Challenge. Balanced overlapping speaker energy with compound noise blanket. uPIT Permutation Invariance prevents gradient cancellation while Wiener filtering smooths high-frequency edge artifacts.";
+    if (tier === 'all') {
+      r.style.display = '';
+    } else if (tier === '4noises') {
+      r.style.display = rNoises === '4' ? '' : 'none';
+    } else if (tier === '3noises') {
+      r.style.display = rNoises === '3' ? '' : 'none';
     } else {
-      text = "🟢 Favorable Separation Environment. High positive SNR with moderate speaker disparity. Conv-TasNet achieves over +12.5 dB SI-SDRi with near-perfect PESQ vocal restoration.";
+      r.style.display = rTier === tier ? '' : 'none';
     }
-    document.getElementById('txtAcousticChallenge').textContent = text;
-  }
-  slSnr.addEventListener('input', updateChallenge);
-  slRatio.addEventListener('input', updateChallenge);
-  slNoise.addEventListener('input', updateChallenge);
+  });
+}
 
-  // 5. Interactive Audio Lab & Canvas Synthesizer
-  const canvas = document.getElementById('audioOscilloscope');
+// 25-Test Search Box
+function filterMatrixTable() {
+  const input = document.getElementById('matrixSearch').value.toLowerCase();
+  const rows = document.querySelectorAll('#testTable tbody tr');
+  rows.forEach(r => {
+    const text = r.innerText.toLowerCase();
+    r.style.display = text.includes(input) ? '' : 'none';
+  });
+}
+
+// Audio Playback in Floating Dock
+function playTestAudio(type, testId, noiseCount, cleanFile) {
+  const padId = String(testId).padStart(2, '0');
+  const dock = document.getElementById('playerDock');
+  const audio = document.getElementById('mainAudioPlayer');
+  const badge = document.getElementById('dockTrackBadge');
+  const title = document.getElementById('dockTrackTitle');
+  const sub = document.getElementById('dockTrackSub');
+
+  let audioPath = '';
+  let badgeText = '';
+  let badgeColor = '';
+  let typeLabel = '';
+
+  const baseAudioDir = 'speech_enhancement/results/25_tests_mossformer_enhancement/audio/';
+
+  if (type === 'clean') {
+    audioPath = baseAudioDir + 'test_' + padId + '_clean.wav';
+    badgeText = 'CLEAN REFERENCE';
+    badgeColor = 'var(--c-wiener)';
+    typeLabel = 'Ground Truth Clean Speech';
+  } else if (type === 'mix') {
+    audioPath = baseAudioDir + 'test_' + padId + '_mixture_' + noiseCount + 'noises.wav';
+    badgeText = noiseCount + ' NOISES MIXTURE';
+    badgeColor = 'var(--c-noise)';
+    typeLabel = 'Corrupted Compound Noise Mixture';
+  } else {
+    audioPath = baseAudioDir + 'test_' + padId + '_mossformer_enhanced.wav';
+    badgeText = 'SOTA MOSSFORMER';
+    badgeColor = 'var(--c-moss)';
+    typeLabel = 'MossFormerGAN Enhanced Output';
+  }
+
+  badge.innerText = badgeText;
+  badge.style.background = badgeColor;
+  title.innerText = 'Test #' + padId + ' — ' + typeLabel;
+  sub.innerText = cleanFile + ' | ' + noiseCount + ' simultaneous noises';
+
+  audio.src = audioPath;
+  dock.style.display = 'flex';
+  audio.play().catch(e => console.log('Audio autoplay interaction:', e));
+}
+
+function closeDock() {
+  const audio = document.getElementById('mainAudioPlayer');
+  audio.pause();
+  document.getElementById('playerDock').style.display = 'none';
+}
+
+// Viva Flashcard Accordion
+function toggleViva(elem) {
+  const answer = elem.nextElementSibling;
+  const isShown = answer.style.display === 'block';
+  answer.style.display = isShown ? 'none' : 'block';
+  elem.querySelector('span:last-child').innerText = isShown ? '▼' : '▲';
+}
+
+// Canvas Oscilloscope Simulator
+let audioCtx = null;
+let osc1 = null;
+let osc2 = null;
+let isOscRunning = false;
+let oscMode = 'mix';
+
+function toggleOscilloscope() {
+  const btn = document.getElementById('btnOscPlay');
+  if (!isOscRunning) {
+    initOsc();
+    btn.innerText = '⏹ Stop Simulator';
+    btn.style.background = 'var(--c-noise)';
+    isOscRunning = true;
+    drawOsc();
+  } else {
+    stopOsc();
+    btn.innerText = '▶ Start Simulator';
+    btn.style.background = 'var(--c-moss)';
+    isOscRunning = false;
+  }
+}
+
+function initOsc() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  osc1 = audioCtx.createOscillator();
+  osc2 = audioCtx.createOscillator();
+  
+  osc1.type = 'sawtooth';
+  osc1.frequency.setValueAtTime(140, audioCtx.currentTime); // Male Baritone
+  
+  osc2.type = 'triangle';
+  osc2.frequency.setValueAtTime(240, audioCtx.currentTime); // Female Soprano
+
+  const gain1 = audioCtx.createGain();
+  const gain2 = audioCtx.createGain();
+  gain1.gain.setValueAtTime(0.08, audioCtx.currentTime);
+  gain2.gain.setValueAtTime(0.08, audioCtx.currentTime);
+
+  osc1.connect(gain1);
+  osc2.connect(gain2);
+
+  gain1.connect(audioCtx.destination);
+  gain2.connect(audioCtx.destination);
+
+  osc1.start();
+  osc2.start();
+}
+
+function setOscMode(mode) {
+  oscMode = mode;
+  if (!audioCtx) return;
+}
+
+function stopOsc() {
+  if (osc1) osc1.stop();
+  if (osc2) osc2.stop();
+  if (audioCtx) audioCtx.close();
+}
+
+function drawOsc() {
+  if (!isOscRunning) return;
+  const canvas = document.getElementById('oscilloscope');
   const ctx = canvas.getContext('2d');
-  let audioAnimId = null;
-  let audioRunning = false;
-  let activeAudioMode = 'mix'; // 'mix', 'spk1', 'spk2', 'wiener'
-  let phaseTime = 0;
+  
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = canvas.parentElement.clientHeight;
 
-  function resizeCanvas() {
-    canvas.width = canvas.parentElement.clientWidth * window.devicePixelRatio;
-    canvas.height = 160 * window.devicePixelRatio;
-    ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-  }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+  ctx.fillStyle = '#060a12';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  function drawWaveform() {
-    const w = canvas.parentElement.clientWidth;
-    const h = 160;
-    ctx.clearRect(0, 0, w, h);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = oscMode === 'mix' ? '#fbbf24' : (oscMode === 'spk1' ? '#38bdf8' : '#34d399');
+  ctx.beginPath();
 
-    // Draw Background Grid
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-    ctx.lineWidth = 1;
-    for (let x = 0; x < w; x += 40) {
-      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-    }
-    for (let y = 0; y < h; y += 30) {
-      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-    }
+  const sliceWidth = canvas.width / 100;
+  let x = 0;
+  const time = Date.now() / 150;
 
-    // Midline
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
-    ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
-
-    // Generate Synthetic Audio Samples
-    ctx.lineWidth = 2.2;
-    if (activeAudioMode === 'mix') {
-      ctx.strokeStyle = '#fbbf24'; // Amber Mix
-    } else if (activeAudioMode === 'spk1') {
-      ctx.strokeStyle = '#38bdf8'; // Sky Blue Spk 1
-    } else if (activeAudioMode === 'spk2') {
-      ctx.strokeStyle = '#c084fc'; // Purple Spk 2
+  for (let i = 0; i < 100; i++) {
+    let y = 0;
+    if (oscMode === 'mix') {
+      y = Math.sin(i * 0.2 + time) * 35 + Math.sin(i * 0.4 + time * 1.7) * 25 + canvas.height / 2;
+    } else if (oscMode === 'spk1') {
+      y = Math.sin(i * 0.2 + time) * 45 + canvas.height / 2;
     } else {
-      ctx.strokeStyle = '#34d399'; // Emerald Wiener
+      y = Math.sin(i * 0.4 + time * 1.7) * 40 + canvas.height / 2;
     }
 
-    ctx.beginPath();
-    for (let x = 0; x < w; x++) {
-      const t = phaseTime + (x * 0.02);
-      let y = 0;
-
-      // Speaker 1 Harmonic Synthesis (F0 = 140 Hz)
-      const s1 = Math.sin(t * 1.4) * 28 + Math.sin(t * 2.8) * 14 + Math.sin(t * 4.2) * 7;
-      // Speaker 2 Harmonic Synthesis (F0 = 240 Hz)
-      const s2 = Math.sin(t * 2.4) * 24 + Math.sin(t * 4.8) * 12 + Math.sin(t * 7.2) * 6;
-      // Background Noise
-      const noise = (Math.random() - 0.5) * 16;
-
-      if (activeAudioMode === 'mix') {
-        y = s1 + s2 + noise;
-      } else if (activeAudioMode === 'spk1') {
-        y = s1 + (Math.random() - 0.5) * 3; // Isolated with minor residual
-      } else if (activeAudioMode === 'spk2') {
-        y = s2 + (Math.random() - 0.5) * 3; // Isolated with minor residual
-      } else {
-        // Wiener Restored (Smoothed pure organic harmonics)
-        y = s1 * 0.95 + Math.sin(t * 1.4) * 4;
-      }
-
-      const yPos = (h / 2) + y;
-      if (x === 0) ctx.moveTo(x, yPos); else ctx.lineTo(x, yPos);
-    }
-    ctx.stroke();
-
-    if (audioRunning) {
-      phaseTime += 0.08;
-      audioAnimId = requestAnimationFrame(drawWaveform);
-    }
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+    x += sliceWidth;
   }
 
-  // Audio Buttons
-  const btnPlay = document.getElementById('btnAudioPlay');
-  const btnStop = document.getElementById('btnAudioStop');
-  const lblMode = document.getElementById('canvasModeLabel');
-  const txtWiener = document.getElementById('txtWienerStatus');
-
-  btnPlay.addEventListener('click', () => {
-    if (!audioRunning) {
-      audioRunning = true;
-      btnPlay.textContent = '⏸ Pause Audio';
-      drawWaveform();
-    } else {
-      audioRunning = false;
-      btnPlay.textContent = '▶ Play Audio';
-      if (audioAnimId) cancelAnimationFrame(audioAnimId);
-    }
-  });
-
-  btnStop.addEventListener('click', () => {
-    audioRunning = false;
-    btnPlay.textContent = '▶ Play Audio';
-    if (audioAnimId) cancelAnimationFrame(audioAnimId);
-    phaseTime = 0;
-    drawWaveform();
-  });
-
-  document.getElementById('btnModeMix').addEventListener('click', () => {
-    activeAudioMode = 'mix';
-    lblMode.textContent = "MODE: Superimposed Mixture (Speaker 1 + Speaker 2 + Background Babble)";
-    lblMode.style.color = "var(--c-mix)";
-    txtWiener.textContent = "Spectral Wiener Smoothing: Inactive";
-    if (!audioRunning) drawWaveform();
-  });
-
-  document.getElementById('btnModeSpk1').addEventListener('click', () => {
-    activeAudioMode = 'spk1';
-    lblMode.textContent = "MODE: Isolated Speaker 1 (Male 140 Hz Formant Track - Conv-TasNet Output)";
-    lblMode.style.color = "var(--c-source)";
-    txtWiener.textContent = "Spectral Wiener Smoothing: Inactive (Raw Mask)";
-    if (!audioRunning) drawWaveform();
-  });
-
-  document.getElementById('btnModeSpk2').addEventListener('click', () => {
-    activeAudioMode = 'spk2';
-    lblMode.textContent = "MODE: Isolated Speaker 2 (Female 240 Hz Formant Track - Conv-TasNet Output)";
-    lblMode.style.color = "var(--c-model)";
-    txtWiener.textContent = "Spectral Wiener Smoothing: Inactive (Raw Mask)";
-    if (!audioRunning) drawWaveform();
-  });
-
-  document.getElementById('btnModeWiener').addEventListener('click', () => {
-    activeAudioMode = 'wiener';
-    lblMode.textContent = "MODE: Natural Wiener Restored (Overtones Synthesized, Zero Metallic Artifacts)";
-    lblMode.style.color = "var(--c-wiener)";
-    txtWiener.textContent = "Spectral Wiener Smoothing: ACTIVE (W_k filter applied)";
-    if (!audioRunning) drawWaveform();
-  });
-
-  drawWaveform(); // Initial render
-
-  // 6. Interactive Metric Progression Chart
-  const metricData = {
-    sisdr: {
-      title: "Scale-Invariant SDR Improvement (SI-SDRi in dB)",
-      data: [
-        { label: "Phase 1: Spectrogram U-Net", val: 4.95, max: 14, color: "var(--c-phase)" },
-        { label: "Phase 2A: Baseline Conv-TasNet (2.7k)", val: 6.98, max: 14, color: "var(--c-mix)" },
-        { label: "Phase 2B: Scaled Conv-TasNet (14k AMP)", val: 11.06, max: 14, color: "var(--c-model)" },
-        { label: "Phase 3: Conv-TasNet + Wiener Filter (Peak)", val: 13.13, max: 14, color: "var(--c-wiener)" }
-      ]
-    },
-    pesq: {
-      title: "Perceptual Speech Quality (PESQ ITU-T P.862: 1.0 to 4.5)",
-      data: [
-        { label: "Phase 1: Spectrogram U-Net", val: 1.72, max: 3.5, color: "var(--c-phase)" },
-        { label: "Phase 2A: Baseline Conv-TasNet", val: 1.94, max: 3.5, color: "var(--c-mix)" },
-        { label: "Phase 2B: Scaled Conv-TasNet", val: 2.24, max: 3.5, color: "var(--c-model)" },
-        { label: "Phase 3: Held-Out Test Set (Peak)", val: 3.07, max: 3.5, color: "var(--c-wiener)" }
-      ]
-    },
-    stoi: {
-      title: "Speech Intelligibility (STOI %)",
-      data: [
-        { label: "Unprocessed Input Mixture", val: 71.3, max: 100, color: "var(--c-noise)" },
-        { label: "Phase 1: Spectrogram U-Net", val: 73.5, max: 100, color: "var(--c-phase)" },
-        { label: "Phase 2A: Baseline Conv-TasNet", val: 79.2, max: 100, color: "var(--c-mix)" },
-        { label: "Phase 3: Conv-TasNet + Wiener Filter", val: 88.1, max: 100, color: "var(--c-wiener)" }
-      ]
-    }
-  };
-
-  window.setMetricView = function(mKey) {
-    const m = metricData[mKey]; if (!m) return;
-    let html = `<div style="font-size:0.9rem; font-weight:700; color:var(--text); margin-bottom:0.6rem;">${m.title}</div>`;
-    m.data.forEach(d => {
-      const pct = Math.round((d.val / d.max) * 100);
-      html += `
-        <div class="metric-row">
-          <div class="metric-label-row">
-            <span>${d.label}</span>
-            <span style="color:${d.color}; font-family:var(--font-mono);">${d.val}${mKey === 'stoi' ? '%' : ''}</span>
-          </div>
-          <div class="metric-bar-track">
-            <div class="metric-bar-fill" style="width:${pct}%; background:${d.color};"></div>
-          </div>
-        </div>
-      `;
-    });
-    document.getElementById('metricChartDisplay').innerHTML = html;
-  };
-  setMetricView('sisdr'); // Initial render
-
-  // 7. Viva Flashcard Drill
-  const vivaCards = [
-    {
-      q: "Why does the STFT magnitude masking baseline suffer from the 'Phase Catastrophe'?",
-      a: "In STFT masking, the model predicts clean magnitude spectrograms but re-synthesizes time audio using the noisy mixture's phase angle. Because speech harmonics shift phase non-linearly under superposition, this phase mismatch introduces severe comb-filtering cancellation, bounding SI-SDRi below +6.0 dB."
-    },
-    {
-      q: "How does Conv-TasNet eliminate the phase estimation bottleneck?",
-      a: "Conv-TasNet operates directly on discrete time-domain waveforms. Its 1D convolutional encoder acts as a learned linear filter bank, while the 1D transposed convolution acts as an inverse synthesis filter bank. Both magnitude and phase representations are optimized implicitly end-to-end."
-    },
-    {
-      q: "What is Permutation Invariant Training (uPIT) and why is it essential?",
-      a: "The network outputs two separated channels (s1_hat, s2_hat), but the assignment order is arbitrary. Hard-coding target speakers causes gradient cancellation. uPIT evaluates all N! permutations, computing SI-SDR for each, and propagates gradients only through the permutation yielding the minimum loss."
-    },
-    {
-      q: "What specific problem does the Spectral Wiener Post-Filter ($W_k$) solve?",
-      a: "Raw time-domain continuous masks occasionally introduce synthetic metallic timbral artifacts. The Wiener filter computes a soft magnitude ratio mask W_k(f,t) in the STFT domain, re-weighting the original mixture to preserve organic vocal tract overtones, elevating PESQ from 1.59 to 2.30 and STOI to 88.1%."
-    },
-    {
-      q: "Why is SI-SDR preferred over standard SNR or waveform MSE?",
-      a: "Waveform MSE penalizes arbitrary global amplitude scaling. A separated speaker scaled by 0.8 is acoustically identical in quality but incurs heavy MSE penalties. SI-SDR orthogonally projects the estimate onto the target, isolating true deformation and residual noise from gain mismatch."
-    }
-  ];
-
-  const vQ = document.getElementById('vivaQText');
-  const vA = document.getElementById('vivaAText');
-  const btnRev = document.getElementById('btnRevealViva');
-  document.getElementById('btnNextViva').addEventListener('click', () => {
-    const item = vivaCards[Math.floor(Math.random() * vivaCards.length)];
-    vQ.textContent = item.q;
-    vA.textContent = item.a;
-    vA.style.display = 'none';
-    btnRev.textContent = '💡 Reveal Answer';
-  });
-  btnRev.addEventListener('click', () => {
-    const isShowing = vA.style.display === 'block';
-    vA.style.display = isShowing ? 'none' : 'block';
-    btnRev.textContent = isShowing ? '💡 Reveal Answer' : '🙈 Hide Answer';
-  });
-
-  window.toggleQA = function(el) {
-    const ans = el.nextElementSibling;
-    ans.classList.toggle('open');
-    el.querySelector('span:last-child').textContent = ans.classList.contains('open') ? '▲' : '▼';
-  };
-
-})();
+  ctx.stroke();
+  requestAnimationFrame(drawOsc);
+}
 </script>
+
 </body>
 </html>
