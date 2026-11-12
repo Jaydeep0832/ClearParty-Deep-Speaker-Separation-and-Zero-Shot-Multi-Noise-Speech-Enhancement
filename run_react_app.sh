@@ -13,11 +13,14 @@ else
     PY="python"
 fi
 
+# Optional port argument (defaults to 7860 - Gradio standard port)
+PORT="${1:-7860}"
+
 # Ensure FastAPI and Uvicorn are installed
 if ! $PY -c "import fastapi, uvicorn" &> /dev/null; then
     echo "📦 Installing FastAPI and Uvicorn..."
     pip install fastapi uvicorn python-multipart
 fi
 
-echo "🚀 Starting High-Performance API & React UI on http://localhost:8000"
-$PY api_server.py
+echo "🚀 Starting High-Performance API & React UI on port $PORT..."
+$PY api_server.py --port "$PORT"

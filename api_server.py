@@ -401,8 +401,32 @@ if os.path.exists(STATIC_DIR):
 
 if __name__ == "__main__":
     import uvicorn
+    import argparse
+    import socket
+
+    parser = argparse.ArgumentParser(description="ClearParty Fast API Server")
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 7860)), help="Port to run on (default 7860)")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host interface")
+    args = parser.parse_args()
+
+    # Function to check if a port is in use and find the next open port
+    def get_open_port(start_port):
+        p = start_port
+        for _ in range(20):
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                if s.connect_ex(("127.0.0.1", p)) != 0:
+                    return p
+            p += 1
+        return start_port
+
+    target_port = get_open_port(args.port)
+
     # Warm up models on startup for instant zero-latency responses
     get_separation_model()
     get_enhancement_model()
-    print("🚀 ClearParty Ultra-Low-Latency API Server starting on http://0.0.0.0:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    print(f"\n🚀 ClearParty Ultra-Low-Latency API & React UI starting on: http://localhost:{target_port}")
+    if target_port != args.port:
+        print(f"ℹ️ (Port {args.port} was busy, automatically switched to open port {target_port})")
+
+    uvicorn.run(app, host=args.host, port=target_port)
