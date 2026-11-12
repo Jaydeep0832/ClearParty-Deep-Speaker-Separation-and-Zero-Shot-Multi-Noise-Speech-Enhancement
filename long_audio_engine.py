@@ -197,3 +197,29 @@ def process_5min_enhancement(input_path, output_dir="enhanced_outputs", chunk_se
         'elapsed_sec': t1 - t0,
         'rtf': (t1 - t0) / dur_sec
     }
+
+if __name__ == "__main__":
+    import sys
+    print("=" * 60)
+    print("🚀 ClearParty Long Audio Overlap-Add Engine (GPU)")
+    print("=" * 60)
+    
+    sample_candidates = [
+        os.path.join(SEP_DIR, "samples", "Input Mixture (Both speakers talking).wav"),
+        os.path.join(BASE_DIR, "audio", "separation", "Input Mixture (Both speakers talking).wav"),
+        os.path.join(BASE_DIR, "audio", "separation", "Input Mixture (Two overlapping speakers).wav")
+    ]
+    
+    input_file = sys.argv[1] if len(sys.argv) > 1 else next((c for c in sample_candidates if os.path.exists(c)), None)
+    
+    if input_file and os.path.exists(input_file):
+        print(f"Testing Separation on: {input_file}")
+        res = process_5min_separation(input_file)
+        print("\n🎉 Separation Succeeded!")
+        print(f"👤 Speaker 1 Saved to: {res['s1_path']}")
+        print(f"👤 Speaker 2 Saved to: {res['s2_path']}")
+        print(f"⚡ Audio Duration: {res['duration_sec']:.2f}s | Processed in: {res['elapsed_sec']:.2f}s (RTF: {res['rtf']:.3f}x)")
+    else:
+        print("⚠️ No input audio specified and default sample not found.")
+        print("Usage: python3 long_audio_engine.py <path_to_audio.wav>")
+

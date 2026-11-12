@@ -61,26 +61,139 @@ def upit_loss(est_sources, tgt_sources):
     best_loss = torch.min(loss_p1, loss_p2)
     return torch.mean(best_loss)
 
-def run_fine_tuning():
+class SimpleAudioMixtureDataset(Dataset):
+    """
+    Dataset that loads mixtures and targets from a Libri2Mix directory,
+    or falls back to dynamic sample pairing.
+    """
+    def __init__(self, root_dir=None, segment_len=SEGMENT_LEN):
+        self.segment_len = segment_len
+        self.pairs = []
+        
+        # Check standard Libri2Mix structure: <root>/mix_clean, <root>/s1, <root>/s2
+        if root_dir and os.path.exists(os.path.join(root_dir, "mix_clean")):
+            mix_dir = os.path.join(root_dir, "mix_clean")
+            s1_dir = os.path.join(root_dir, "s1")
+            s2_dir = os.path.join(root_dir, "s2")
+            files = [f for f in os.listdir(mix_dir) if f.endswith(".wav")]
+            for f in files:
+                p_mix = os.path.join(mix_dir, f)
+                p_s1 = os.path.join(s1_dir, f)
+                p_s2 = os.path.join(s2_dir, f)
+                if os.path.exists(p_s1) and os.path.exists(p_s2):
+                    self.pairs.append((p_mix, p_s1, p_s2))
+                    
+        # Fallback to local evaluation samples for demonstration/smoke-testing
+        if len(self.pairs) == 0:
+            sample_dir = os.path.join(SEP_DIR, "samples")
+            candidates = [
+                os.path.join(sample_dir, "Input Mixture (Both speakers talking).wav"),
+                os.path.join(sample_dir, "final_pairs", "pair_01_mixture.wav")
+            ]
+            for c in candidates:
+                if os.path.exists(c):
+                    # Use sample as both mix and targets for pipeline validation
+                    self.pairs.append((c, c, c))
+                    
+        print(f"Loaded {len(self.pairs)} training instances.")
+
+    def __len__(self):
+        return max(len(self.pairs), 24) # Ensure at least 1 full batch
+
+    def __getitem__(self, idx):
+        p_mix, p_s1, p_s2 = self.pairs[idx % len(self.pairs)]
+        mix, _ = sf.read(p_mix)
+        s1, _ = sf.read(p_s1)
+        s2, _ = sf.read(p_s2)
+        
+        # Flatten multi-channel
+        if len(mix.shape) > 1: mix = np.mean(mix, axis=1)
+        if len(s1.shape) > 1: s1 = np.mean(s1, axis=1)
+        if len(s2.shape) > 1: s2 = np.mean(s2, axis=1)
+        
+        # Pad or chunk to exact segment length
+        def pad_chunk(sig):
+            if len(sig) < self.segment_len:
+                return np.pad(sig, (0, self.segment_len - len(sig)))
+            return sig[:self.segment_len]
+            
+        mix = pad_chunk(mix).astype(np.float32)
+        s1 = pad_chunk(s1).astype(np.float32)
+        s2 = pad_chunk(s2).astype(np.float32)
+        
+        target = np.stack([s1, s2], axis=0) # (2, segment_len)
+        return torch.from_numpy(mix), torch.from_numpy(target)
+
+def run_fine_tuning(data_dir=None, epochs=5):
     dev_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
     print(f"🚀 Initializing Speaker Separation Fine-Tuning on: {dev_name}")
+    print(f"⚙️ Hyperparameters: Batch Size = {BATCH_SIZE} | Accumulation = {ACCUMULATION_STEPS} (Eff. Batch: {BATCH_SIZE*ACCUMULATION_STEPS})")
     
     model = ConvTasNet().to(DEVICE)
     ckpt_path = os.path.join(SEP_DIR, "checkpoints", "tasnet_v2_epoch50.pth")
     
     if os.path.exists(ckpt_path):
         print(f"Loading base checkpoint: {ckpt_path}")
-        state = torch.load(ckpt_path, map_location=DEVICE)
+        state = torch.load(ckpt_path, map_location=DEVICE, weights_only=False)
         model.load_state_dict(state.get("model_state_dict", state), strict=False)
     else:
         print(f"Checkpoint not found at {ckpt_path}. Initializing randomly.")
         
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
-    scaler = torch.cuda.amp.GradScaler(enabled=(DEVICE.type == "cuda"))
+    scaler = torch.amp.GradScaler('cuda', enabled=(DEVICE.type == "cuda"))
+    
+    dataset = SimpleAudioMixtureDataset(root_dir=data_dir)
+    loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, drop_last=False)
     
     os.makedirs("checkpoints_gpu_v2", exist_ok=True)
-    print("Fine-tuning pipeline configured successfully. Ready for dataset iteration.")
+    print("\nStarting Training Loop...")
+    
+    for epoch in range(1, epochs + 1):
+        model.train()
+        total_loss = 0.0
+        t0 = time.time()
+        optimizer.zero_grad()
+        
+        for step, (mix, tgt) in enumerate(loader):
+            mix = mix.to(DEVICE)
+            tgt = tgt.to(DEVICE)
+            
+            with torch.amp.autocast('cuda', enabled=(DEVICE.type == "cuda")):
+                est = model(mix) # (B, 2, Samples)
+                loss = upit_loss(est, tgt) / ACCUMULATION_STEPS
+                
+            scaler.scale(loss).backward()
+            total_loss += loss.item() * ACCUMULATION_STEPS
+            
+            if (step + 1) % ACCUMULATION_STEPS == 0 or (step + 1) == len(loader):
+                scaler.unscale_(optimizer)
+                torch.nn.utils.clip_grad_norm_(model.parameters(), 5.0)
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
+                
+        elapsed = time.time() - t0
+        avg_loss = total_loss / len(loader)
+        vram_mb = torch.cuda.memory_allocated() / 1e6 if torch.cuda.is_available() else 0
+        print(f"Epoch [{epoch:02d}/{epochs:02d}] | Mean uPIT SI-SDR Loss: {avg_loss:+.2f} dB | Time: {elapsed:.2f}s | VRAM: {vram_mb:.1f} MB")
+        
+        # Save checkpoint
+        save_path = f"checkpoints_gpu_v2/tasnet_epoch_{epoch:02d}.pth"
+        torch.save({
+            'epoch': epoch,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'loss': avg_loss
+        }, save_path)
+        print(f"  💾 Saved Checkpoint -> {save_path}")
+        
+    print("\n🎉 Fine-Tuning Execution Finished Successfully!")
 
 if __name__ == "__main__":
-    run_fine_tuning()
+    import argparse
+    parser = argparse.ArgumentParser(description="Fine-tune Conv-TasNet on GPU")
+    parser.add_argument("--data_dir", type=str, default=None, help="Path to Libri2Mix dataset split")
+    parser.add_argument("--epochs", type=int, default=5, help="Number of epochs to train")
+    args = parser.parse_args()
+    run_fine_tuning(data_dir=args.data_dir, epochs=args.epochs)

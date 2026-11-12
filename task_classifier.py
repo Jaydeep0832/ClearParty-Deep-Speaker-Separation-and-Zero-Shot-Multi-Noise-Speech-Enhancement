@@ -60,23 +60,26 @@ def classify_audio_task(audio_path, target_sr=8000):
         'f0_std_hz': f0_std
     }
     
-    # Decision boundary:
-    if mean_flatness > 0.045 or harmonic_ratio < 0.40:
+    # Calibrated decision boundary for 8 kHz / 16 kHz telephony and clean audio:
+    # 1. Environmental noise produces high flatness (> 0.14) or near-zero pitch tracking.
+    # 2. Overlapping speech has strong vocal formant modulation (F0 std > 25 Hz) even in 8kHz speech.
+    if mean_flatness > 0.14 or (harmonic_ratio < 0.10 and f0_std < 15.0):
         task = 'ENHANCEMENT'
-        confidence = min(0.98, max(0.60, (mean_flatness / 0.08) * 0.9))
+        confidence = min(0.98, max(0.65, (mean_flatness / 0.15) * 85.0))
         desc = "Dominant environmental stationary/non-stationary noise detected. Routing to Speech Enhancement."
-    elif f0_std > 35.0 and harmonic_ratio >= 0.40:
+    elif f0_std > 20.0 or harmonic_ratio >= 0.12:
         task = 'SEPARATION'
-        confidence = min(0.96, max(0.65, (f0_std / 70.0) * 0.85 + 0.15))
-        desc = "Bimodal pitch distribution and multi-talker harmonics detected. Routing to Two-Speaker Separation."
+        conf_val = min(0.96, max(0.70, (f0_std / 45.0) * 80.0 + 15.0))
+        confidence = conf_val
+        desc = "Bimodal pitch distribution and multi-talker vocal harmonics detected. Routing to Two-Speaker Separation."
     else:
-        if harmonic_ratio >= 0.55:
+        if f0_std >= 18.0:
             task = 'SEPARATION'
-            confidence = 0.70
-            desc = "Rich harmonic speech content detected. Defaulting to Speaker Separation."
+            confidence = 72.0
+            desc = "Multi-talker vocal pitch variation detected. Defaulting to Speaker Separation."
         else:
             task = 'ENHANCEMENT'
-            confidence = 0.70
+            confidence = 70.0
             desc = "Broadband acoustic corruption detected. Defaulting to Speech Enhancement."
             
     return {
