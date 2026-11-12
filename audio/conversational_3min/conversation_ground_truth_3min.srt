@@ -1,0 +1,84 @@
+1
+00:00,500 --> 00:11,627
+[David]: Good morning everyone. Welcome to our speech technology project review meeting. Today we are evaluating our deep learning framework for the cocktail party problem.
+
+2
+00:10,292 --> 00:18,784
+[Zira]: Thanks David. I have prepared the latest evaluation benchmarks for both speaker separation and multi-noise speech enhancement.
+
+3
+00:17,765 --> 00:25,353
+[David]: That is great. Can you start by summarizing the key metrics from our twenty-five multi-noise test conditions?
+
+4
+00:24,443 --> 00:34,740
+[Zira]: Certainly. Across all twenty-five complex noise mixtures, our system achieved an average signal to distortion ratio gain of nearly nine decibels.
+
+5
+00:33,505 --> 00:41,133
+[David]: Nine decibels is a significant gain. What about the perceptual speech quality and intelligibility scores?
+
+6
+00:40,218 --> 00:50,825
+[Zira]: The PESQ score improved by one point one eight MOS, reaching two point seven nine, while the STOI intelligibility score reached zero point nine two.
+
+7
+00:49,552 --> 00:56,826
+[David]: Excellent. And how does our system handle overlapping speech when two people talk at the exact same time?
+
+8
+00:55,953 --> 01:06,136
+[Zira]: For overlapping speech, the scaled Conv-TasNet architecture separates the co-channel mixture in the raw time domain using dilated temporal convolutions.
+
+9
+01:04,914 --> 01:14,567
+[David]: Right, and we also incorporated the mixture consistent Wiener post-filter, which successfully eliminates the high frequency metallic artifacts.
+
+10
+01:13,408 --> 01:23,671
+[Zira]: Yes, exactly. The Wiener filter preserves the natural recording phase by projecting power spectral densities back onto the original mixture spectrum.
+
+11
+01:22,439 --> 01:30,828
+[David]: Now let us discuss the long audio pipeline. How does the system process continuous files up to five minutes in length?
+
+12
+01:29,821 --> 01:39,978
+[Zira]: We implemented a sine-windowed fifty percent overlap-add engine. It divides the audio into four-second buffers and aligns cross-chunk speaker correlations.
+
+13
+01:38,759 --> 01:46,287
+[David]: That completely prevents speaker identity swapping across chunk transitions, ensuring continuous speaker tracking.
+
+14
+01:45,384 --> 01:54,132
+[Zira]: Precisely. And immediately following neural separation, each isolated channel is passed to our Whisper speech-to-text engine.
+
+15
+01:53,082 --> 02:01,075
+[David]: Which generates time-synchronized, speaker-attributed dialogue transcripts and exportable SubRip subtitle files.
+
+16
+02:00,116 --> 02:10,104
+[Zira]: In addition, we deployed the new React web interface with FastAPI backend, achieving real-time factors below zero point zero five on the GPU.
+
+17
+02:08,905 --> 02:15,034
+[David]: That is over twenty times faster than real time on our NVIDIA TITAN Xp graphics card.
+
+18
+02:14,298 --> 02:23,611
+[Zira]: Yes, the user can now upload any audio file, view instant waveform scrubbing, and download the clean separated speech streams.
+
+19
+02:22,494 --> 02:31,661
+[David]: This will have a profound societal impact on telemedicine consultations, courtroom audio forensics, and assistive hearing technology.
+
+20
+02:30,561 --> 02:39,524
+[Zira]: I agree completely. All models, checkpoints, and documentation are now finalized and ready for the technical project defense.
+
+21
+02:38,449 --> 02:45,662
+[David]: Thank you for the comprehensive update. Let us conclude this session and proceed with the live demonstration.
+
