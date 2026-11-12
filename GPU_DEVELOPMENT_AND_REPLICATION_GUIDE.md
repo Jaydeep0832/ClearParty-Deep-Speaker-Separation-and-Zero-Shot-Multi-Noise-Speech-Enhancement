@@ -53,9 +53,66 @@ Total Physical VRAM: 8.00 GB (8,192 MB)
 
 ---
 
-## 2. One-Click Environment Setup on New GPU PC
+## 2. One-Click Environment Setup (Linux & Windows)
 
-Follow these exact commands on your new GPU computer to configure the Python environment, NVIDIA CUDA drivers, and all required libraries.
+### 🐧 For Linux (Ubuntu / Debian / Pop!_OS / WSL2)
+
+#### Step 2.1: Verify NVIDIA Driver & CUDA
+Open your terminal:
+```bash
+nvidia-smi
+```
+*Verify that NVIDIA drivers and CUDA Version ($\ge 12.0$) are reported with your 8 GB GPU.*
+
+#### Step 2.2: Install System Audio Libraries & FFmpeg
+Linux requires `ffmpeg` and `libsndfile1` for raw audio stream decoding:
+```bash
+sudo apt update
+sudo apt install -y ffmpeg libsndfile1 git git-lfs build-essential python3-dev
+```
+
+#### Step 2.3: Clone Repository & Create Virtual Environment
+```bash
+# Clone the repository
+git clone https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement.git
+cd ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement
+
+# Option A: Using Conda (Recommended for Linux GPU workstations)
+conda create -n clearparty python=3.10 -y
+conda activate clearparty
+
+# Option B: Using Python3 venv
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### Step 2.4: Install PyTorch with CUDA 12.1 Acceleration
+```bash
+pip install --upgrade pip setuptools wheel
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+#### Step 2.5: Install Audio, ASR, and Web Dependencies
+```bash
+pip install numpy scipy soundfile librosa matplotlib pandas streamlit pystoi pesq openai-whisper srt
+```
+
+#### Step 2.6: Verify GPU in Python
+```bash
+python3 -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'None'); print('VRAM:', round(torch.cuda.get_device_properties(0).total_memory/1e9, 2), 'GB')"
+```
+
+#### Step 2.7: Launch the Linux WebApp
+```bash
+chmod +x run_app.sh
+./run_app.sh
+# Alternatively:
+streamlit run webapp.py --server.port 8501
+```
+
+---
+
+### 🪟 For Windows (PowerShell)
 
 ### Step 2.1: Verify NVIDIA Driver & GPU Hardware
 Open Windows PowerShell:
