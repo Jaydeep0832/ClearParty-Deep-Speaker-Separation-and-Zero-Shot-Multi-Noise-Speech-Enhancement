@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ClearParty AI — Deep Audio Intelligence</title>
+  <link rel="icon" href="https://img.icons8.com/fluency/48/audio-wave.png" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            surface: {
+              900: '#0b0f17',
+              800: '#111827',
+              700: '#1f2937',
+              600: '#374151'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- React 18 & Babel for instant zero-latency compilation -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b0f17;
+      color: #f3f4f6;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #111827;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 4px;
+    }
+    .glow-indigo {
+      box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.25);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-surface-900 min-h-screen text-slate-100 antialiased selection:bg-brand-500 selection:text-white">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- Sub-Components ---
+    function Header({ status }) {
+      return (
+        <header className="border-b border-surface-700/60 bg-surface-900/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <span className="text-xl">🎙️</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold tracking-tight text-white">ClearParty AI</h1>
+                  <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                    React v2.0
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">Deep Speaker Separation & Multi-Noise Speech Enhancement</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-800 border border-surface-700/80 text-xs text-slate-300">
+                <span className={`w-2 h-2 rounded-full ${status.cuda_available ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`}></span>
+                <span className="font-medium text-slate-200">{status.device_name || 'Detecting...'}</span>
+                {status.vram_total_gb > 0 && (
+                  <span className="text-slate-400 font-mono text-[11px]">
+                    ({status.vram_used_gb} / {status.vram_total_gb} GB)
+                  </span>
+                )}
+              </div>
+              <a 
+                href="https://github.com/Jaydeep0832/ClearParty-Deep-Speaker-Separation-and-Zero-Shot-Multi-Noise-Speech-Enhancement" 
+                target="_blank" 
+                rel="noreferrer"
+                className="px-3 py-1.5 rounded-lg bg-surface-800 hover:bg-surface-700 border border-surface-700 text-xs font-medium text-slate-300 transition-colors flex items-center gap-1.5"
+              >
+                <span>GitHub</span>
+                <svg className="w-3.5 h-3.5 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              </a>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function AudioPlayerCard({ title, badge, badgeColor, audioUrl, fileName, isClean }) {
+      if (!audioUrl) return null;
+      return (
+        <div className={`p-4 rounded-xl bg-surface-800 border ${isClean ? 'border-emerald-500/30' : 'border-surface-700'} shadow-lg transition-all`}>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <span className={`px-2 py-0.5 text-xs font-semibold rounded-md ${badgeColor}`}>
+                {badge}
+              </span>
+              <h3 className="text-sm font-semibold text-slate-200">{title}</h3>
+            </div>
+            <a 
+              href={audioUrl} 
+              download={fileName}
+              className="text-xs px-2.5 py-1 rounded-md bg-surface-700 hover:bg-surface-600 text-slate-300 font-medium transition-colors flex items-center gap-1"
+            >
+              ⬇️ Save WAV
+            </a>
+          </div>
+          <audio controls src={audioUrl} className="w-full h-10 rounded-lg filter invert-[0.85] hue-rotate-180 opacity-90" />
+        </div>
+      );
+    }
+
+    function DialogueCard({ events, srtContent }) {
+      const [filter, setFilter] = useState('');
+      const [copied, setCopied] = useState(false);
+
+      if (!events || events.length === 0) return null;
+
+      const filteredEvents = events.filter(e => 
+        e.text.toLowerCase().includes(filter.toLowerCase()) || 
+        (e.speaker && e.speaker.toLowerCase().includes(filter.toLowerCase()))
+      );
+
+      const copyToClipboard = () => {
+        const text = events.map(e => `[${formatTime(e.start)} - ${formatTime(e.end)}] ${e.speaker || 'Speaker'}: ${e.text}`).join('\n');
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+
+      const downloadSRT = () => {
+        const blob = new Blob([srtContent], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'dialogue_transcript.srt';
+        a.click();
+      };
+
+      return (
+        <div className="p-5 rounded-2xl bg-surface-800/90 border border-surface-700 shadow-xl mt-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-surface-700">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">📝</span>
+              <h3 className="text-base font-bold text-white">Diarized Speech-to-Text Transcription</h3>
+              <span className="text-xs px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 font-mono">Whisper ASR</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={copyToClipboard}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-surface-700 hover:bg-surface-600 text-slate-200 transition-colors flex items-center gap-1.5"
+              >
+                {copied ? '✅ Copied!' : '📋 Copy Text'}
+              </button>
+              <button 
+                onClick={downloadSRT}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-brand-600 hover:bg-brand-500 text-white transition-colors flex items-center gap-1.5 shadow-md shadow-brand-500/20"
+              >
+                🎬 Export .SRT
+              </button>
+            </div>
+          </div>
+
+          <div className="my-3">
+            <input 
+              type="text" 
+              placeholder="Search in transcription..." 
+              value={filter}
+              onChange={e => setFilter(e.target.value)}
+              className="w-full px-3 py-2 text-xs rounded-lg bg-surface-900 border border-surface-700 focus:border-brand-500 focus:outline-none text-slate-200 placeholder-slate-500"
+            />
+          </div>
+
+          <div className="space-y-3 max-h-72 overflow-y-auto custom-scrollbar pr-2 mt-4">
+            {filteredEvents.map((ev, idx) => {
+              const isSpeaker1 = ev.speaker === 'Speaker 1';
+              return (
+                <div 
+                  key={idx} 
+                  className={`p-3 rounded-xl border transition-all ${
+                    isSpeaker1 
+                      ? 'bg-indigo-950/20 border-indigo-500/30' 
+                      : 'bg-emerald-950/20 border-emerald-500/30'
+                  }`}
+                >
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className={`font-semibold flex items-center gap-1.5 ${isSpeaker1 ? 'text-indigo-400' : 'text-emerald-400'}`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                      {ev.speaker || 'Speaker'}
+                    </span>
+                    <span className="font-mono text-slate-500 text-[11px]">
+                      {formatTime(ev.start)} ➔ {formatTime(ev.end)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-200 leading-relaxed font-normal">{ev.text}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      );
+    }
+
+    function formatTime(sec) {
+      if (sec === undefined || sec === null) return '00:00.0';
+      const m = Math.floor(sec / 60);
+      const s = (sec % 60).toFixed(1);
+      return `${String(m).padStart(2, '0')}:${String(s).padStart(4, '0')}`;
+    }
+
+    // --- Main App Component ---
+    function App() {
+      const [status, setStatus] = useState({});
+      const [samples, setSamples] = useState([]);
+      const [selectedSample, setSelectedSample] = useState('');
+      const [file, setFile] = useState(null);
+      const [mode, setMode] = useState('AUTO'); // AUTO, SEPARATION, ENHANCEMENT
+      const [enableASR, setEnableASR] = useState(true);
+      const [loading, setLoading] = useState(false);
+      const [result, setResult] = useState(null);
+      const [error, setError] = useState(null);
+      const fileInputRef = useRef(null);
+
+      // Load System Status & Demo Samples on mount
+      useEffect(() => {
+        fetch('/api/system-status')
+          .then(r => r.json())
+          .then(data => setStatus(data))
+          .catch(e => console.error("Status fetch failed:", e));
+
+        fetch('/api/samples')
+          .then(r => r.json())
+          .then(data => setSamples(data))
+          .catch(e => console.error("Samples fetch failed:", e));
+      }, []);
+
+      const handleFileChange = (e) => {
+        if (e.target.files && e.target.files[0]) {
+          setFile(e.target.files[0]);
+          setSelectedSample('');
+        }
+      };
+
+      const handleProcess = async () => {
+        if (!file && !selectedSample) {
+          setError("Please select a sample mixture or upload an audio file first.");
+          return;
+        }
+
+        setError(null);
+        setLoading(true);
+        setResult(null);
+
+        const formData = new FormData();
+        if (file) {
+          formData.append('file', file);
+        } else if (selectedSample) {
+          formData.append('sample_id', selectedSample);
+        }
+        formData.append('mode', mode);
+        formData.append('enable_asr', enableASR);
+
+        try {
+          const res = await fetch('/api/process', {
+            method: 'POST',
+            body: formData
+          });
+
+          if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || "Processing failed");
+          }
+
+          const data = await res.json();
+          setResult(data);
+        } catch (err) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex flex-col">
+          <Header status={status} />
+
+          <main className="flex-1 max-w-7xl mx-auto w-full p-6">
+            {/* Top Tagline */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-extrabold tracking-tight text-white">Audio Intelligence Studio</h2>
+                <p className="text-sm text-slate-400">High-performance neural separation, zero-shot compound denoising, and diarized transcription.</p>
+              </div>
+
+              {/* Mode Pills */}
+              <div className="flex items-center gap-1.5 p-1 rounded-xl bg-surface-800 border border-surface-700">
+                {[
+                  { id: 'AUTO', label: '⚡ Auto-Route', tip: 'Scene Classifier' },
+                  { id: 'SEPARATION', label: '👥 Separation', tip: 'Conv-TasNet' },
+                  { id: 'ENHANCEMENT', label: '🎧 Enhancement', tip: 'Compound Denoiser' }
+                ].map(tab => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setMode(tab.id)}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+                      mode === tab.id 
+                        ? 'bg-brand-600 text-white shadow-md shadow-brand-500/20' 
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-surface-700/50'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="p-4 mb-6 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm flex items-center justify-between">
+                <span>⚠️ {error}</span>
+                <button onClick={() => setError(null)} className="text-red-400 hover:text-red-200">✕</button>
+              </div>
+            )}
+
+            {/* Two-Column Gradio-Style Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Left Column: Input Configuration */}
+              <div className="lg:col-span-5 space-y-5">
+                
+                {/* Upload Card */}
+                <div className="p-5 rounded-2xl bg-surface-800 border border-surface-700 shadow-xl">
+                  <h3 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
+                    <span>📥</span> 1. Audio Source (Max 5.0 Min)
+                  </h3>
+
+                  {/* Dropzone */}
+                  <div 
+                    onClick={() => fileInputRef.current.click()}
+                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                      file ? 'border-brand-500 bg-brand-500/5' : 'border-surface-600 hover:border-brand-400 hover:bg-surface-700/30'
+                    }`}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileChange}
+                      accept="audio/*" 
+                      className="hidden" 
+                    />
+                    <div className="w-10 h-10 mx-auto rounded-full bg-surface-700 flex items-center justify-center text-slate-300 mb-2">
+                      📁
+                    </div>
+                    {file ? (
+                      <div>
+                        <p className="text-xs font-semibold text-brand-300 truncate max-w-xs mx-auto">{file.name}</p>
+                        <p className="text-[11px] text-slate-500 mt-1">{(file.size / 1e6).toFixed(2)} MB • Ready to process</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs font-medium text-slate-300">Click or drag & drop audio here</p>
+                        <p className="text-[11px] text-slate-500 mt-1">Supports WAV, MP3, FLAC, M4A up to 5 min</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Or Demo Samples */}
+                  <div className="mt-4">
+                    <label className="text-xs font-medium text-slate-400 mb-1.5 block">Or select a built-in benchmark mixture:</label>
+                    <select
+                      value={selectedSample}
+                      onChange={(e) => {
+                        setSelectedSample(e.target.value);
+                        setFile(null);
+                      }}
+                      className="w-full px-3 py-2 text-xs rounded-lg bg-surface-900 border border-surface-700 text-slate-200 focus:outline-none focus:border-brand-500"
+                    >
+                      <option value="">-- Choose Built-In Audio Sample --</option>
+                      {samples.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Options */}
+                  <div className="mt-5 pt-4 border-t border-surface-700/80 flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={enableASR} 
+                        onChange={e => setEnableASR(e.target.checked)}
+                        className="rounded bg-surface-900 border-surface-700 text-brand-500 focus:ring-brand-500"
+                      />
+                      <span className="text-xs font-medium text-slate-300">Enable Diarized Whisper ASR</span>
+                    </label>
+                    <span className="text-[11px] font-mono text-slate-500">Wiener Filter: Active</span>
+                  </div>
+
+                  {/* Process Button */}
+                  <button
+                    onClick={handleProcess}
+                    disabled={loading || (!file && !selectedSample)}
+                    className={`w-full mt-5 py-3 px-4 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                      loading || (!file && !selectedSample)
+                        ? 'bg-surface-700 text-slate-500 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white shadow-lg shadow-brand-500/25'
+                    }`}
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Processing on TITAN Xp GPU...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>🚀 Run Neural Audio AI</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* System Specs Card */}
+                <div className="p-4 rounded-2xl bg-surface-800/60 border border-surface-700/80 text-xs text-slate-400 space-y-2">
+                  <div className="flex justify-between">
+                    <span>Neural Separation Core:</span>
+                    <span className="font-semibold text-slate-200">Conv-TasNet (3.4M Params)</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Speech Enhancement:</span>
+                    <span className="font-semibold text-slate-200">Multi-Noise Denoiser + Wiener</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Post-Filter Optimization:</span>
+                    <span className="font-semibold text-slate-200">Phase-Preserving FFT Wiener</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Speech-to-Text:</span>
+                    <span className="font-semibold text-slate-200">OpenAI Whisper (GPU Accel)</span>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Column: Interactive Results & Dialogue */}
+              <div className="lg:col-span-7">
+                {result ? (
+                  <div className="space-y-5">
+                    
+                    {/* Performance & Routing Header */}
+                    <div className="p-4 rounded-xl bg-surface-800 border border-surface-700 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-400 font-medium">Task Executed:</span>
+                          <span className="px-2 py-0.5 rounded text-xs font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30">
+                            {result.task_executed}
+                          </span>
+                        </div>
+                        {result.classification && (
+                          <p className="text-[11px] text-slate-400 mt-1">{result.classification.description}</p>
+                        )}
+                      </div>
+
+                      {result.latency && (
+                        <div className="flex items-center gap-4 text-xs font-mono">
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">TOTAL TIME</span>
+                            <span className="font-bold text-emerald-400">{result.latency.total_seconds}s</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">GPU FORWARD</span>
+                            <span className="font-bold text-brand-400">{result.latency.neural_gpu_seconds}s</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">SPEEDUP</span>
+                            <span className="font-bold text-slate-200">{result.latency.gpu_speedup}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Output Audio Tracks */}
+                    <div className="space-y-4">
+                      {result.outputs.speaker1_url && (
+                        <AudioPlayerCard 
+                          title="Isolated Speaker 1 Stream"
+                          badge="Speaker 1"
+                          badgeColor="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30"
+                          audioUrl={result.outputs.speaker1_url}
+                          fileName="speaker1_separated.wav"
+                          isClean={true}
+                        />
+                      )}
+
+                      {result.outputs.speaker2_url && (
+                        <AudioPlayerCard 
+                          title="Isolated Speaker 2 Stream"
+                          badge="Speaker 2"
+                          badgeColor="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          audioUrl={result.outputs.speaker2_url}
+                          fileName="speaker2_separated.wav"
+                          isClean={true}
+                        />
+                      )}
+
+                      {result.outputs.enhanced_url && (
+                        <AudioPlayerCard 
+                          title="Restored Clean Speech (Multi-Noise Removed)"
+                          badge="Enhanced Clean"
+                          badgeColor="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                          audioUrl={result.outputs.enhanced_url}
+                          fileName="clean_enhanced.wav"
+                          isClean={true}
+                        />
+                      )}
+                    </div>
+
+                    {/* Diarized Transcript Panel */}
+                    <DialogueCard events={result.dialogue} srtContent={result.srt_content} />
+
+                  </div>
+                ) : (
+                  /* Empty State */
+                  <div className="h-full min-h-[380px] p-8 rounded-2xl bg-surface-800/40 border border-dashed border-surface-700/80 flex flex-col items-center justify-center text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-surface-800 flex items-center justify-center text-2xl text-slate-400 mb-3 shadow-inner">
+                      🎧
+                    </div>
+                    <h3 className="text-sm font-semibold text-slate-200">Awaiting Audio Input</h3>
+                    <p className="text-xs text-slate-500 max-w-sm mt-1">
+                      Upload an audio file or choose a benchmark mixture on the left, then click <strong>Run Neural Audio AI</strong> to see instant separated streams and diarized subtitles.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
