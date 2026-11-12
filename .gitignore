@@ -1,10 +1,12 @@
-# Model Checkpoint Weights (Host on HuggingFace / Drive)
-*.pth
-*.pt
+# Allow core pre-trained checkpoints (<50MB each)
+!speaker_separation/checkpoints/tasnet_v2_epoch50.pth
+!speech_enhancement/checkpoints/denoiser_best.pth
+
+# Large Checkpoints (>100MB) Host on HuggingFace / Drive
 *.ckpt
-checkpoints/
 checkpoints_v2/
 checkpoints_denoising/
+speech_enhancement/checkpoints/MossFormer_GAN_SE_16K/
 
 # Datasets and Large Compressed Archives
 *.zip
